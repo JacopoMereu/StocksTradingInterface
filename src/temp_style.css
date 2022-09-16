@@ -1,0 +1,50 @@
+/*body {*/
+/*    margin:0px;*/
+/*    overflow: hidden;*/
+/*}*/
+
+/*rect {*/
+/*    fill:steelblue;*/
+/*}*/
+
+/*text {*/
+/*    font-size: 2.53em;*/
+/*    font-family: sans-serif;*/
+/*}*/
+
+/*.tick text {*/
+/*    font-size: 2em;*/
+/*    fill: #635F5D;*/
+/*}*/
+
+/*.tick line {*/
+/*    stroke: #C0C0BB;*/
+/*}*/
+
+/*.axis-label {*/
+/*    font-size: 3em;*/
+/*    fill: #635F5D;*/
+/*}*/
+.navbar {
+    overflow: hidden;
+    background-color: #333;
+    position: fixed; /* Set the navbar to fixed position */
+    top: 0; /* Position the navbar at the top of the page */
+    width: 100%; /* Full width */
+}
+
+/* Links inside the navbar */
+.navbar select {
+    float: left;
+    display: block;
+    color:  #333;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+/*!* Change background on mouse-over *!*/
+/*.navbar a:hover {*/
+/*    background: #ddd;*/
+/*    color: black;*/
+/*}*/
