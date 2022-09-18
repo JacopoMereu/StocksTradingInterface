@@ -7,14 +7,29 @@
 
     <script src="/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
     <script type="text/javascript" src="js/render.js"></script>
+    <script type="text/javascript" src="js/actionsHTML.js"></script>
     <script type="text/javascript" src="lib2/d3.js"></script>
     <script type="text/javascript" src="js/logic.js"></script>
 </head>
 <body>
-<div class="navbar">
-    <select id="selectButton"></select>
-    <select id="selectFrameTime"></select>
-    </div>
-    <svg width="500" height="500" id="container">    </svg>
+<select id="selectButton"></select>
+<select id="selectFrameTime"></select>
+<br>
+<label>Candlestick patterns</label>
+<input id="enableCandlestickPattern" type="checkbox" onchange="setPatternsVisibilityHTML(this.checked)"/>
+<br>
+<label>Overlapping indicators</label>
+<input id="enableOverlappingIndicators" type="checkbox" onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
+<br>
+<select id="selectFunction">
+ <option value="NATR">NATR</option>
+ <option value="SMA" selected>SMA</option>
+ <option value="EMA">EMA</option>
+ <option value="RSI">RSI</option>
+</select>
+<input type="number" placeholder="14" id="avg">
+<input type="button" value="Add" onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
+<br>
+<svg width="500" height="500" id="container">    </svg>
 </body>
 </html>
