@@ -4,13 +4,11 @@
 
 
 const candlesRectClass = 'rect-class';
+const chartsClass = "candles-class";
 const rectHighlightedColor = "#add8e6";
 
 function mainRender(
     data,
-    atr,
-    rsi,
-    overlap_functions_json,
     {
         date = d => d.date, // given d in data, returns the (temporal) x-value
         open = d => d.open, // given d in data, returns a (quantitative) y-value
@@ -47,7 +45,7 @@ function mainRender(
     const dCandlePatternType = data.map(d => d.candlestick_pattern_type);
 
     // Create g for zooming
-    const gContainingAll = d3.select('svg').append("g").attr('class', 'candles-class');
+    const gContainingAll = d3.select('svg').append("g").attr('class', chartsClass);
 
     // Get xAxis
     const [xScale, xAxis] = getAxisX(timeframe, xDomain, xRange, xPadding);
@@ -67,7 +65,7 @@ function mainRender(
             marginTop, marginRight, marginLeft, marginBottom,
         chartWidth, height*0.8,
             stroke, strokeLinecap, colors,
-        overlap_functions_json);
+        getOverlappingIndicatorsJSON());
 
     ////// Create a second graph below the first one: ATR //////
     prevLow = currLow;  prevHigh = currHigh;
@@ -77,13 +75,13 @@ function mainRender(
 
     const gContainingAll2 = d3.select('svg')
         .append("g")
-        .attr('class', 'candles-class')
+        .attr('class', chartsClass)
         .attr('id', 'atr');
 
     createVolatilityChart(
         gContainingAll2,
-        atr,
-        xScale, xAxis,
+        getVolatilityIndicatorsJSON(),
+        xDomainAsRange, xScale, xAxis,
         currHigh, currLow,
         marginTop, marginRight, marginLeft,marginBottom,
         chartWidth,
@@ -95,29 +93,27 @@ function mainRender(
     currLow = currHigh*1.2;
 
     const gContainingAll3 = d3.select('svg').append("g")
-        .attr('class', 'candles-class')
+        .attr('class', chartsClass)
         .attr('id', 'rsi');
 
-    createStrenghtChart(
+    createStrengthChart(
         gContainingAll3,
-        rsi,
+        getStrengthIndicatorsJSON(),
         xDomainAsRange, xScale, xAxis,
         currLow, currHigh,
         marginTop, marginRight, marginLeft,marginBottom,
         chartWidth,
         stroke, strokeLinecap, colors
     )
-    /////////////
-
+    ///////////
 
     // End
-    return gContainingAll.node();
 }
 
 
 ///////////////// main part /////////////////
 function createCandlestickChart(
-    gContainingAll,
+    container,
     Yo,
     Yc,
     Yl,
@@ -133,22 +129,35 @@ function createCandlestickChart(
 ) {
 
     const xDomain = xScale.domain();
+    const xPadding = xScale.padding();
     const xDomainAsRange = d3.range(Yl.length);
 
     const yAxisLabel = '↑ Price ($)'; // a label for the y-axis
-    const yDomain = [d3.min(Yl), d3.max(Yh)];
+    let yDomain = [d3.min(Yl),d3.max(Yh)];
     const yRange = [chartHeight - marginTop, marginTop]; // [bottom, top]
-
-    // Compute titles.
-    const title = getTitle(xDomain, Yo, Yc, Yh, Yl);
 
     // Get yAxis
     const [yScale, yAxis] = getAxisY(yDomain, yRange, chartHeight/40);
 
+    // INNER FUNCTIONS
+    // Create the title popup
+    function getTitle(date, opens, closes, highs, lows) {
+        const formatDate = d3.utcFormat("%B %-d, %Y");
+        const formatValue = d3.format(".2f");
+        const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
+
+        const title = i => `${formatDate(date[i])}
+Open: ${formatValue(opens[i])}
+Close: ${formatValue(closes[i])} (${formatChange(opens[i], closes[i])})
+Low: ${formatValue(lows[i])}
+High: ${formatValue(highs[i])}`;
+
+        return title;
+    }
 
     // Create the gs containing the candlesticks data and add the data
     function add_CandlesticksData_groups() {
-        const gElementsList = gContainingAll
+        const gElementsList = container
             .append("g")
             .on("mouseover", event => {
                 d3.select(event.target.parentNode)
@@ -174,13 +183,13 @@ function createCandlestickChart(
             .join("g")
             .attr('class', i => `data-${i}`)
             .attr('id', 'candlestick-container')
-            .attr("transform", i => `translate(${xScale(xDomain[i])},${marginTop})`);
+            .attr("transform", i => `translate(${xScale(xDomain[i])},${0})`);
 
         // Create a rect as high as the container
         gElementsList.append('rect')
-            .attr('x', -xScale.bandwidth() / 2)
-            .attr('y', 0)
-            .attr('width', xScale.bandwidth())
+            .attr('x', -xScale.bandwidth()-xPadding)
+            .attr('y', marginTop)
+            .attr('width', xScale.bandwidth()*2+xPadding*2)
             .attr('height', chartHeight - marginBottom - marginTop)
             .attr('stroke-width', '0')
             .attr('fill', 'transparent')
@@ -189,7 +198,9 @@ function createCandlestickChart(
 
         // Shadow of the candle
         gElementsList.append("line")
-            .attr("y1", i => yScale(Yl[i]))
+            .attr("y1", i => {
+                return yScale(Yl[i])
+            })
             .attr("y2", i => yScale(Yh[i]));
 
         // Real body of the candle
@@ -214,6 +225,9 @@ function createCandlestickChart(
             })
             .attr('text-anchor', 'middle')
             .style('font', 'normal normal normal 1em Verdana, sans-serif')
+            .style("visibility", ()=>
+                getPatternsVisibility() ? 'visible' : 'hidden'
+            )
             .text(i => {
                 if (dCandlePattern[i] === "NO_PATTERN")
                     return '';
@@ -221,57 +235,48 @@ function createCandlestickChart(
                     return '*';
             });
 
-        if (title) gElementsList.append("title")
+
+        // Compute titles and append it.
+        const title = getTitle(xDomain, Yo, Yc, Yh, Yl);
+        gElementsList.append("title")
             .text(title);
 
     }
 
     // Create the g for the overlapping functions
     function add_Overlapping_Functions() {
-        const tempColorScale = d3.scaleOrdinal(d3.schemeCategory10)
-        for (let key in overlap_functions_json) {
-            const new_data = overlap_functions_json[key];
-
-            gContainingAll
-                .append('path')
-                .attr('class', 'sma')
-                .datum(new_data)
-                .attr("fill", "none")
-                .attr("stroke", d => tempColorScale(d))
-                .attr("stroke-width", 1.5)
-                .attr("d", d3.line()
-                    .x(
-                        (d, i) => xScale(xDomain[i])
-                    )
-                    .y(d => d === 0 ? yScale(yDomain[0]) : yScale(d)
-                    )
-                )
-        }
+        addPaths(container, overlap_functions_json, xScale, yScale);
+        container.selectAll('path')
+            .style("visibility", ()=>
+                getOverlappingIndicatorsVisibility() ? 'visible' : 'hidden'
+            )
     }
+    /////
 
-    // Call the functions
-    add_XAxis_Group(gContainingAll, xAxis, chartHeight - marginBottom);
-    add_YAxis_Group(gContainingAll, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
+    // CALL THE FUNCTIONS
+    add_XAxis_Group(container, xAxis, chartHeight - marginBottom);
+    add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
     add_CandlesticksData_groups();
     add_Overlapping_Functions();
 }
 
-
 function createVolatilityChart(
     container,
-    atr,
-    xScale, xAxis,
+    volatility_functions_json,
+    xDomainAsRange, xScale, xAxis,
     yLow,yHigh,
     marginTop, marginRight, marginLeft, marginBottom,
     chartWidth,
     stroke, strokeLinecap, colors
 )   {
-    const xDomain = xScale.domain();
 
-    const yAxisLabel = '↑ Volatility ($)';
+    const xDomain = xScale.domain();
+    const xPadding = xScale.padding();
 
     // Get yAxis
-    const yDomain = [d3.min(atr), d3.max(atr)]
+    const yAxisLabel = '↑ Volatility ($)';
+
+    const yDomain = [Math.floor(0), Math.ceil(volatility_functions_json['global_max'])]
     const yRange = [yLow-marginTop, yHigh+marginBottom];
     const [yScale, yAxis] = getAxisY(yDomain, yRange, yHigh/80);
 
@@ -279,26 +284,72 @@ function createVolatilityChart(
     add_XAxis_Group(container, xAxis, yLow-marginBottom);
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
 
-    // Path for ATR
-    container
-        .append('path')
-        .attr('class', 'atr')
-        .datum(atr)
-        .attr("fill", "none")
-        .attr("stroke", 'black')
-        .attr("stroke-width", 1.5)
-        .attr("d", d3.line()
-            .x(
-                (d, i) => xScale(xDomain[i])
-            )
-            .y(d => d === 0 ? yScale(yDomain[0]) : yScale(d)
-            )
-        )
+
+    // Create the g for the overlapping functions
+    function add_Volatility_Functions() {
+        addPaths(container, volatility_functions_json, xScale, yScale);
+    }
+    add_Volatility_Functions();
+
+    // Create a group for each data point
+    const gElementsList = container
+        .append("g")
+        .on("mouseover", event => {
+            // highlight rect in atr
+            let gContainer = d3.select(event.target.parentNode);
+            gContainer
+                .selectAll('.' + candlesRectClass)
+                .attr("fill", rectHighlightedColor);
+
+            // highlight rects in candlestick
+            let idx = +gContainer.attr('class').split('-')[1];
+            let min_idx = Math.max(0, idx - 14);
+            let arr = d3.range(min_idx, idx)
+
+            arr.map(j => d3.selectAll(`g#candlestick-container.data-${j} rect`)
+                .attr("fill", rectHighlightedColor));
+
+        })
+        .on("mouseout", event => {
+            let gContainer = d3.select(event.target.parentNode);
+            gContainer
+                .selectAll('.' + candlesRectClass)
+                .attr("fill", "transparent");
+
+            // candlestick
+            let idx = +gContainer.attr('class').split('-')[1];
+            let min_idx = Math.max(0, idx - 14);
+            let arr = d3.range(min_idx, idx)
+            arr.map(j => d3.selectAll(`g#candlestick-container.data-${j} rect`).attr("fill", 'transparent'));
+        })
+        .attr('class', 'data-class')
+        .attr("stroke", stroke)
+        .attr("stroke-linecap", strokeLinecap)
+        .selectAll("g")
+        .data(xDomainAsRange)
+        .join("g")
+        .attr('class', i => `data-${i}`)
+        .attr("transform", i => `translate(${xScale(xDomain[i])},${yHigh})`);
+
+    // For each group, create a rect as high as the container
+    gElementsList.append('rect')
+        .attr('x', -xScale.bandwidth() - xPadding)
+        .attr('y', 0)
+        .attr('width', xScale.bandwidth()*2+xPadding*2)
+        .attr('height', (yLow - yHigh))
+        .attr('stroke-width', '0')
+        .attr('fill', 'transparent')
+        .attr('class', candlesRectClass)
+
+    // Compute titles and append it.
+    const title = getIndicatorTitle("atr", volatility_functions_json);
+    gElementsList.append("title")
+        .text(title);
 }
 
-function createStrenghtChart(
+function createStrengthChart(
     container,
-    rsi,
+    strength_functions_json,
     xDomainAsRange, xScale, xAxis,
     yLow,yHigh,
     marginTop, marginRight, marginLeft, marginBottom,
@@ -306,8 +357,9 @@ function createStrenghtChart(
     stroke, strokeLinecap, colors
 ){
     const xDomain = xScale.domain();
+    const xPadding = xScale.padding();
 
-    const yAxisLabel = '↑ RSI';
+    const yAxisLabel = '↑ RSI (%)';
 
     const yDomain = [0, 100]
     const yRange = [yLow-marginTop, yHigh+marginBottom];
@@ -317,21 +369,9 @@ function createStrenghtChart(
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
 
     // Path
-    container
-        .append('path')
-        .attr('class', 'atr')
-        .datum(rsi)
-        .attr("fill", "none")
-        .attr("stroke", 'red')
-        .attr("stroke-width", 1.5)
-        .attr("d", d3.line()
-            .x(
-                (d, i) => xScale(xDomain[i])
-            )
-            .y(d => isNaN(d) ? yScale(yDomain[0]) : yScale(d)
-            )
-        )
+    addPaths(container, strength_functions_json, xScale, yScale);
 
+    // Create a group for each data point
     const gElementsList = container
         .append("g")
         .on("mouseover", event => {
@@ -370,27 +410,64 @@ function createStrenghtChart(
         .attr('class', i => `data-${i}`)
         .attr("transform", i => `translate(${xScale(xDomain[i])},${yHigh})`);
 
-    // Create a rect as high as the container
+    // For each group, create a rect as high as the container
     gElementsList.append('rect')
-        .attr('x', -xScale.bandwidth() / 2)
+        .attr('x', -xScale.bandwidth() - xPadding)
         .attr('y', 0)
-        .attr('width', xScale.bandwidth())
+        .attr('width', xScale.bandwidth()*2+xPadding*2)
         .attr('height', (yLow - yHigh))
         .attr('stroke-width', '0')
         .attr('fill', 'transparent')
         .attr('class', candlesRectClass)
+
+    // Compute titles and append it.
+    const title = getIndicatorTitle("rsi", strength_functions_json);
+    gElementsList.append("title")
+        .text(title);
 }
+
 /////////////////////////////////////////////
-function getTitle(date, opens, closes, highs, lows) {
+
+
+// COMMON FUNCTIONS /////////////////////////
+function addPaths(container, functions_json, xScale, yScale) {
+    const xDomain = xScale.domain();
+    const yDomain = yScale.domain();
+
+    for (const [id, value] of Object.entries(functions_json['functions'])) {
+        const name=value['name'];
+        const new_data=value['data'];
+        const color=value['color'];
+        const window_size=value['window_size'];
+
+        container
+            .append('path')
+            .attr('class', name)
+            .attr('id', `${name}-${id}`)
+            .datum(new_data)
+            .attr("fill", "none")
+            .attr("stroke", color)
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(
+                    (d, i) => xScale(xDomain[i])
+                )
+                .y(d => isNaN(d) || d === 0 ? yScale(yDomain[0]) : yScale(d)
+                )
+            )
+    }
+}
+
+// Create the title popup
+function getIndicatorTitle(indicator_name, indicator_values) {
     const formatDate = d3.utcFormat("%B %-d, %Y");
     const formatValue = d3.format(".2f");
-    const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
-
-    const title = i => `${formatDate(date[i])}
-Open: ${formatValue(opens[i])}
-Close: ${formatValue(closes[i])} (${formatChange(opens[i], closes[i])})
-Low: ${formatValue(lows[i])}
-High: ${formatValue(highs[i])}`;
+    const formatChange = (f => (y0, y1) => {
+        return f((y1 - y0) / y0)
+    })(d3.format("+.2%"));
+    //${formatDate(date[i])}
+    const title = i => `
+${indicator_name}: ${formatValue(indicator_values[i])} (${formatChange(indicator_values[i-1], indicator_values[i])})`;
 
     return title;
 }
@@ -449,8 +526,7 @@ function getAxisX(timeframe, xDomain, xRange, xPadding) {
 function getAxisY(yDomain, yRange, nTicks, ticks) {
     const yFormat = "~f"; // a format specifier for the value on the y-axis
     const tickPadding = 5;
-
-    const yScale = d3.scaleLinear(yDomain, yRange);
+    const yScale = d3.scaleLinear(yDomain, yRange).nice();
     const yAxis = d3.axisLeft(yScale).tickPadding(tickPadding);
     if (ticks) {
         yAxis.tickValues(ticks);
