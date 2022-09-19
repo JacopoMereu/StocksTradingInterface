@@ -43,8 +43,19 @@
     text-decoration: none;
 }
 
-/*!* Change background on mouse-over *!*/
-/*.navbar a:hover {*/
-/*    background: #ddd;*/
-/*    color: black;*/
-/*}*/
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    line-height: 0.4em !important;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    font: 0.6em sans-serif;
+    /*font-weight: bold;*/
+    background: white;
+    border-style: solid;
+    border-width: thin;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+}

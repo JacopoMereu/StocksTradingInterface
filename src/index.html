@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <title>Let's make a face D3.js Tutorial</title>
+    <title>UIT Project</title>
     <link rel="stylesheet" href="temp_style.css"/>
     <link rel="shortcut icon" href="./favicon.ico">
 
@@ -12,24 +12,37 @@
     <script type="text/javascript" src="js/logic.js"></script>
 </head>
 <body>
+<div class="tooltip"></div>
+<!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
 <select id="selectButton"></select>
 <select id="selectFrameTime"></select>
+<!--CHECKBOX TO TOGGLE THE CANDLESTICK PATTERNS VISIBILITY -->
 <br>
 <label>Candlestick patterns</label>
 <input id="enableCandlestickPattern" type="checkbox" onchange="setPatternsVisibilityHTML(this.checked)"/>
+<!--CHECKBOX TO TOGGLE THE OVERLAPPING INDICATORS VISIBILITY -->
 <br>
 <label>Overlapping indicators</label>
-<input id="enableOverlappingIndicators" type="checkbox" onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
+<input id="enableOverlappingIndicators" type="checkbox"
+       onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
+<!--CHECKBOX TO TOGGLE THE WINDOWS VISIBILITY -->
+<br>
+<label>Indicator windows</label>
+<input id="enableIndicatorWindows" type="checkbox" onchange="setIndicatorWindowsVisibilityHTML(this.checked)"/>
+
+<!--DROPDOWN TO ADD AN INDICATOR AND ITS WINDOW SIZE-->
 <br>
 <select id="selectFunction">
- <option value="NATR">NATR</option>
- <option value="SMA" selected>SMA</option>
- <option value="EMA">EMA</option>
- <option value="RSI">RSI</option>
+    <option value="NATR">NATR</option>
+    <option value="SMA" selected>SMA</option>
+    <option value="EMA">EMA</option>
+    <option value="RSI">RSI</option>
 </select>
 <input type="number" placeholder="14" id="avg">
-<input type="button" value="Add" onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
+<input type="button" value="Add"
+       onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
+<!--SVG-->
 <br>
-<svg width="500" height="500" id="container">    </svg>
+<svg width="500" height="500" id="container"></svg>
 </body>
 </html>

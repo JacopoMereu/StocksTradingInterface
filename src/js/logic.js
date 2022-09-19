@@ -1,13 +1,16 @@
+// current data and timeframe
 var _curr_data = [];
 var _curr_timeframe = "";
+// checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
+var _indicator_windows_enabled = false;
+// indicator list
 var _overlap_indicators_json = {}
 var _volatility_indicators_json = {}
 var _strength_indicators_json = {}
 
-//TODO A checkbox to enable/disable the windows
-//TODO Add a window for each indicator of the same color of the indicator.
+//TODO Sort the indicators based on the windows size
 //TODO Add a label to each indicator paths
 
 //TODO Add an alternative style for the candlestick and a radio button to switch between them
@@ -97,6 +100,7 @@ function main() {
 function updateRendering() {
     render_data(_curr_data, _curr_timeframe);
 }
+
 const render_data = (data, timeframe) => {
     const charts = d3.selectAll(`.${chartsClass}`)
     const old_transform = !charts.empty() ? charts.attr('transform') : undefined;
@@ -137,6 +141,7 @@ const render_data = (data, timeframe) => {
         d3.selectAll(`.${chartsClass}`).attr('transform', old_transform);
 
 };
+
 function load_data(filename, timeframe) {
 
     let folder = "data/results/";
@@ -158,12 +163,12 @@ function load_data(filename, timeframe) {
             addIndicatorFunction("EMA", 14)
 
             // Volatility indicator
-            addIndicatorFunction("NATR", 14)
             addIndicatorFunction("NATR", 24)
+            addIndicatorFunction("NATR", 14)
 
             // Momentum indicator goes on the bottom
-            addIndicatorFunction("RSI", 14)
             addIndicatorFunction("RSI", 24)
+            addIndicatorFunction("RSI", 14)
 
             render_data(data, timeframe);
         });
@@ -173,11 +178,12 @@ function load_data(filename, timeframe) {
 
 //// Function to change the data to display
 // SETTERS
-function resetIndicators(){
+function resetIndicators() {
     _overlap_indicators_json = {"global_max": 0, "functions": {}};
     _volatility_indicators_json = {"global_max": 0, "functions": {}};
     _strength_indicators_json = {"global_max": 0, "functions": {}};
 }
+
 function addIndicatorFunction(funName, funWindowSize) {
     const funData = eval(`${funName}(${JSON.stringify(_curr_data)}, ${funWindowSize})`);
     const funColor = getRandomColor();
@@ -191,34 +197,48 @@ function addIndicatorFunction(funName, funWindowSize) {
         "data": funData,
         "max": localMax,
     }
-    if(indicator_json["global_max"] < localMax)
+    if (indicator_json["global_max"] < localMax)
         indicator_json["global_max"] = localMax;
 }
 
-function setOverlappingIndicatorsVisibility(isChecked){
+function setOverlappingIndicatorsVisibility(isChecked) {
     _overlap_indicators_enabled = isChecked;
 }
+
 function setPatternsVisibility(isEnabled) {
     _candlestick_enabled = isEnabled;
 }
+
+function setIndicatorWindowsVisibility(isChecked) {
+    _indicator_windows_enabled = isChecked;
+}
+
 // GETTERS
 function getPatternsVisibility() {
     return _candlestick_enabled;
 }
+
 function getOverlappingIndicatorsVisibility() {
     return _overlap_indicators_enabled;
 }
-function getOverlappingIndicatorsJSON(){
+
+function getIndicatorWindowsVisibility() {
+    return _indicator_windows_enabled;
+}
+
+function getOverlappingIndicatorsJSON() {
     return _overlap_indicators_json;
 }
-function getVolatilityIndicatorsJSON(){
+
+function getVolatilityIndicatorsJSON() {
     return _volatility_indicators_json;
 }
-function getStrengthIndicatorsJSON(){
+
+function getStrengthIndicatorsJSON() {
     return _strength_indicators_json;
 }
 
-function getIndicatorsJSON(indicatorName){
+function getIndicatorsJSON(indicatorName) {
     const volatility_list = ["ATR", "NATR"];
     const overlap_list = ["SMA", "EMA"];
     const strength_list = ["RSI"];
@@ -232,6 +252,7 @@ function getIndicatorsJSON(indicatorName){
     else
         return null;
 }
+
 //////////////////////////////////////////////////
 
 // Return a random color
@@ -381,4 +402,5 @@ function RSI(data, windows_size = 14) {
     }
     return RSI;
 }
+
 //////////////////////////
