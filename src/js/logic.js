@@ -1,6 +1,7 @@
 // current data and timeframe
 var _curr_data = [];
 var _curr_timeframe = "";
+var _ohcl_chart_style = "candlestick";
 // checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
@@ -12,8 +13,6 @@ var _strength_indicators_json = {}
 
 //TODO Sort the indicators based on the windows size
 //TODO Add a label to each indicator paths
-
-//TODO Add an alternative style for the candlestick and a radio button to switch between them
 
 window.onload = function () {
     main()
@@ -163,6 +162,7 @@ function load_data(filename, timeframe) {
             addIndicatorFunction("EMA", 14)
 
             // Volatility indicator
+            addIndicatorFunction("NATR", 50)
             addIndicatorFunction("NATR", 24)
             addIndicatorFunction("NATR", 14)
 
@@ -213,7 +213,14 @@ function setIndicatorWindowsVisibility(isChecked) {
     _indicator_windows_enabled = isChecked;
 }
 
+function setOHCLChartStyle(style) {
+    _ohcl_chart_style = style;
+}
 // GETTERS
+function getOHCLChartStyle() {
+    return _ohcl_chart_style;
+}
+
 function getPatternsVisibility() {
     return _candlestick_enabled;
 }

@@ -16,6 +16,10 @@
 <!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
 <select id="selectButton"></select>
 <select id="selectFrameTime"></select>
+<div onchange="setOHCLChartStyleHTML(event)">
+    <input type="radio" name="ohcl_style" value="candlestick" checked>Candlestick<br>
+    <input type="radio" name="ohcl_style" value="linechart">Linechart<br>
+</div>
 <!--CHECKBOX TO TOGGLE THE CANDLESTICK PATTERNS VISIBILITY -->
 <br>
 <label>Candlestick patterns</label>
