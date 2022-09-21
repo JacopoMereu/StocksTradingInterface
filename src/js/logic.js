@@ -11,8 +11,8 @@ var _overlap_indicators_json = {}
 var _volatility_indicators_json = {}
 var _strength_indicators_json = {}
 
-//TODO Sort the indicators based on the windows size
 //TODO Add a label to each indicator paths
+//TODO Check better the indicator functions and remove the 'CDL' from the candlestick column (dataset)
 
 window.onload = function () {
     main()
@@ -158,13 +158,13 @@ function load_data(filename, timeframe) {
 
             // ADD DEFAULT INDICATORS FOR PRACTIC
             // Overlap indicator goes directly on the chart
-            addIndicatorFunction("SMA", 14)
+            addIndicatorFunction("SMA", 24)
             addIndicatorFunction("EMA", 14)
 
             // Volatility indicator
-            addIndicatorFunction("NATR", 50)
-            addIndicatorFunction("NATR", 24)
             addIndicatorFunction("NATR", 14)
+            addIndicatorFunction("NATR", 24)
+            addIndicatorFunction("NATR", 50)
 
             // Momentum indicator goes on the bottom
             addIndicatorFunction("RSI", 24)
@@ -179,9 +179,9 @@ function load_data(filename, timeframe) {
 //// Function to change the data to display
 // SETTERS
 function resetIndicators() {
-    _overlap_indicators_json = {"global_max": 0, "functions": {}};
-    _volatility_indicators_json = {"global_max": 0, "functions": {}};
-    _strength_indicators_json = {"global_max": 0, "functions": {}};
+    _overlap_indicators_json = {"global_max": 0, "functions": []};
+    _volatility_indicators_json = {"global_max": 0, "functions": []};
+    _strength_indicators_json = {"global_max": 0, "functions": []};
 }
 
 function addIndicatorFunction(funName, funWindowSize) {
@@ -199,6 +199,11 @@ function addIndicatorFunction(funName, funWindowSize) {
     }
     if (indicator_json["global_max"] < localMax)
         indicator_json["global_max"] = localMax;
+
+    // Sort
+    indicator_json['functions'] = indicator_json['functions'].sort(function(x, y){
+        return d3.ascending(x['window_size'], y['window_size']);
+    })
 }
 
 function setOverlappingIndicatorsVisibility(isChecked) {
@@ -216,6 +221,7 @@ function setIndicatorWindowsVisibility(isChecked) {
 function setOHCLChartStyle(style) {
     _ohcl_chart_style = style;
 }
+
 // GETTERS
 function getOHCLChartStyle() {
     return _ohcl_chart_style;
