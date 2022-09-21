@@ -6,6 +6,7 @@
 const candlesRectClass = 'rect-class';
 const chartsClass = "candles-class";
 const rectHighlightedColor = "#add8e6";
+const _TEMP_SWITCH_WINDOW_MODE = false; //TODO delete this
 
 function mainRender(
     data,
@@ -149,7 +150,7 @@ High: ${formatValue(highs[i])}`;
         const gElementsList = container
             .append("g")
             .on("mouseover", event => {
-                let gContainer =  d3.select(event.target.parentNode);
+                let gContainer = d3.select(event.target.parentNode);
 
                 highlight_rect_in_current_chart(gContainer, true);
 
@@ -157,7 +158,7 @@ High: ${formatValue(highs[i])}`;
                 if (a.text() !== "") a.text(i => dCandlePattern[i]);
             })
             .on("mouseout", event => {
-                let gContainer =  d3.select(event.target.parentNode);
+                let gContainer = d3.select(event.target.parentNode);
 
                 highlight_rect_in_current_chart(gContainer, false);
 
@@ -175,11 +176,46 @@ High: ${formatValue(highs[i])}`;
             .attr("transform", i => `translate(${xScale(xDomain[i])},${0})`);
 
         // Create a rect as high as the container
-        addRects(gElementsList, xScale, xPadding, marginTop,chartHeight - marginBottom - marginTop);
+        addRects(gElementsList, xScale, xPadding, marginTop, chartHeight - marginBottom - marginTop);
 
+        // Add 2nd style: linechart close
+        let data2 = xDomainAsRange.map(i => [xScale(xDomain[i]), yScale(Yc[i])])
+        // container
+        //     .selectAll(null)
+        //     .data(d3.pairs(data2))
+        //     .enter()
+        //     .append("line")
+        //     //d[i][j] i=0,1 j=0,1. i=candle, j=x,y
+        //     .attr("x1", d => d[0][0])
+        //     .attr("x2", d => d[1][0])
+        //     .attr("y1", d => d[0][1])
+        //     .attr("y2", d => d[1][1])
+        //     .style("stroke-width", "2px")
+        //     .style("stroke", d =>{
+        //         console.log("d", d)
+        //         return colors[1 + Math.sign(d[1][1] - d[0][1])]
+        //     })
+        gElementsList.append("line")
+            .data(d3.pairs(data2))
+            .attr('class', 'style_linechart')
+            // .attr("x1", (d,i) => 0 })
+            // .attr("x2", (d,i) => xScale(xDomain[i+1])-xScale(xDomain[i]))
+            // .attr("y1", i => !isNaN( yScale(Yc[i+1]) ) ? (yScale(Yc[i])) :"" )
+            // .attr("y2", i => yScale(Yc[i+1]))
+            //d[i][j] i=0,1 j=0,1. i=candle, j=x,y
+            .attr("x1", d => 0)
+            .attr("x2", d => d[1][0] - d[0][0])
+            .attr("y1", d => d[0][1])
+            .attr("y2", d => d[1][1])
+            .style("stroke-width", "2px")
+            .style("stroke", (d, i) => {
+                return colors[1 + Math.sign(d[1][1] - d[0][1])]
+            });
 
+        //
         // Shadow of the candle
         gElementsList.append("line")
+            .attr("class", "style_candlestick")
             .attr("y1", i => {
                 return yScale(Yl[i])
             })
@@ -187,6 +223,7 @@ High: ${formatValue(highs[i])}`;
 
         // Real body of the candle
         gElementsList.append("line")
+            .attr("class", "style_candlestick")
             .attr("y1", i => yScale(Yo[i]))
             .attr("y2", i => yScale(Yc[i]))
             .attr("stroke-width", xScale.bandwidth())
@@ -227,8 +264,8 @@ High: ${formatValue(highs[i])}`;
 
     // Create the g for the overlapping functions
     function add_Overlapping_Functions() {
-        addPaths(container, overlap_functions_json, xScale, yScale);
-        container.selectAll('path')
+        addIndicatorPaths(container, overlap_functions_json, xScale, yScale);
+        container.selectAll('.indicator-line')
             .style("visibility", () =>
                 getOverlappingIndicatorsVisibility() ? 'visible' : 'hidden'
             )
@@ -241,6 +278,22 @@ High: ${formatValue(highs[i])}`;
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
     add_CandlesticksData_groups();
     add_Overlapping_Functions();
+
+    switch (getOHCLChartStyle()) {
+        case "candlestick":
+            container.selectAll(".style_candlestick")
+                .attr('visibility', 'visible');
+            container.selectAll(".style_linechart")
+                .attr('visibility', 'hidden');
+            // container.
+            break;
+        case "linechart":
+            container.selectAll(".style_candlestick")
+                .attr('visibility', 'hidden');
+            container.selectAll(".style_linechart")
+                .attr('visibility', 'visible');
+            break;
+    }
 }
 
 function createVolatilityChart(
@@ -322,7 +375,7 @@ function genericIndicatorChart(functions_json,
 
 
     function add_indicators_lines() {
-        addPaths(container, functions_json, xScale, yScale);
+        addIndicatorPaths(container, functions_json, xScale, yScale);
     }
 
 
@@ -341,7 +394,7 @@ function genericIndicatorChart(functions_json,
             let tooltip = d3.select('.tooltip');
             tooltip
                 .style("left", (event.x) + "px")
-                .style("top",  (event.y - 32) + "px")
+                .style("top", (event.y - 32) + "px")
                 .style("opacity", .9)
                 .html(localT.html());
 
@@ -370,7 +423,7 @@ function genericIndicatorChart(functions_json,
         .attr("transform", i => `translate(${xScale(xDomain[i])},${yHigh})`);
 
     // For each group, create a rect as high as the container
-    addRects(gElementsList, xScale, xPadding, 0,yLow - yHigh)
+    addRects(gElementsList, xScale, xPadding, 0, yLow - yHigh)
     add_indicators_lines();
 
 
@@ -380,7 +433,7 @@ function genericIndicatorChart(functions_json,
 }
 
 // COMMON FUNCTIONS /////////////////////////
-function addPaths(container, functions_json, xScale, yScale) {
+function addIndicatorPaths(container, functions_json, xScale, yScale) {
     const xDomain = xScale.domain();
     const yDomain = yScale.domain();
 
@@ -392,7 +445,7 @@ function addPaths(container, functions_json, xScale, yScale) {
 
         container
             .append('path')
-            .attr('class', name)
+            .attr('class', 'indicator-line')
             .attr('id', `${name}-${id}`)
             .datum(new_data)
             .attr("fill", "none")
@@ -432,14 +485,15 @@ function addIndicatorTitle(gList, functions_json) {
     })(d3.format("+.2%"));
 
     const titleFun = i => {
-        let title = ""; let title_html = "";
+        let title = "";
+        let title_html = "";
         let tooltip = d3.create('div');
         tooltip.attr('class', 'tooltip');
         // tooltip
         //     .attr('class', 'tooltip')
         //     .attr('visibility', 'hidden')
         // ;
-        let j=0;
+        let j = 0;
         for (const [id, value] of Object.entries(functions_json['functions'])) {
             const name = value['name'];
             const new_data = value['data'];
@@ -448,33 +502,15 @@ function addIndicatorTitle(gList, functions_json) {
 
             title = ` ${formatValue(new_data[i])} (${formatChange(new_data[i - 1], new_data[i])})`
             title_html += `<p><span style="color:${color};"><b>${name}(${window_size}):</b></span>${title}</p>`;
-        j++;
+            j++;
         }
         tooltip.html(title_html)
         return tooltip.node();
     }
 // gList.append(i=>{return titleFun(i)});
-gList.each(function (d, i) {
-    d3.select(this).append(() => titleFun(i));
-})
-
-    // gList.append('g')
-    //     .selectAll('text')
-    //     .data(d3.range(Object.keys(functions_json['functions']).length))
-    //     .enter()
-    //     .text(i=>{console.log(i)});
-
-    // gList.append("div")
-    //     .style("visibility", "hidden")
-    //     .style("background-color", "black")
-    //     .style("border", "solid")
-    //     .style("border-width", "1px")
-    //     .style("border-radius", "5px")
-    //     .style("padding", "10px")
-    //     .html("<p>I'm a tooltip written in HTML</p><br>Fancy<br><span style='font-size: 40px;'>Isn't it?</span>");
-
-    //${formatDate(date[i])}
-
+    gList.each(function (d, i) {
+        d3.select(this).append(() => titleFun(i));
+    })
 }
 
 function getAxisX(timeframe, xDomain, xRange, xPadding) {
@@ -601,14 +637,50 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
     container.select(function () {
         return this.parentNode.parentNode;
     }).selectAll("path").each(function (d, i) {
-        // Get its window_size and color
-        let window_size = d3.select(this).attr("window_size")
-        let color = turn_on ? d3.select(this).attr("stroke") : 'transparent';
-        // The minimum index is 0
-        let min_idx = Math.max(0, idx - window_size);
-        // Highlight the rects from i-window_size to i-1
-        d3.range(min_idx, idx)
-            .map(j => d3.selectAll(`g#candlestick-container.data-${j} rect`)
-                .attr("fill", color));
-    })
+            // Get its window_size and color
+            let window_size = d3.select(this).attr("window_size")
+            let color = turn_on ? d3.select(this).attr("stroke") : 'transparent';
+            // The minimum index is 0
+            let min_idx = Math.max(0, idx - window_size);
+
+            // Highlight the rects from i-window_size to i-1
+            if (_TEMP_SWITCH_WINDOW_MODE) {
+                d3.range(min_idx, idx).map(j =>
+                    d3.select(`g#candlestick-container.data-${j} rect`)
+                        .attr("fill", color)
+                );
+            } else {
+                let c = d3.select('g.data-class');
+                if (!turn_on) {
+                    c.select('rect#window-rect').remove();
+                } else {
+                    let firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
+                    let lastG = d3.select(`g#candlestick-container.data-${idx - 1}`)
+                    let firstRect = firstG.select("rect")
+                    let lastRect = lastG.select("rect")
+
+                    let firstX =
+                        +firstG.attr("transform").split(",")[0].split("(")[1]
+                        + +firstRect.attr("x")
+
+                    let lastX = (+lastG.attr("transform").split(",")[0].split("(")[1])
+                        + (+lastRect.attr("x"))
+                        + +lastRect.attr("width")
+
+                    c
+                        .append('rect')
+                        .attr('id', 'window-rect')
+                        .attr("fill", "none")
+                        .attr("stroke", color)
+                        .attr("stroke-width", 1/window_size*40+.5) // > window_size => < stroke-width
+                        // .attr("stroke-width", window_size/5)
+                        // .attr("stroke-width", window_size)
+                        .attr('x', firstX)
+                        .attr('y', firstRect.attr('y'))
+                        .attr('width', lastX - firstX)
+                        .attr('height', firstRect.attr('height'))
+                }
+            }
+        }
+    )
 }
