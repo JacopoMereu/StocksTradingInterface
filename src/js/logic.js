@@ -12,16 +12,16 @@ var _volatility_indicators_json = {}
 var _strength_indicators_json = {}
 
 //TODO Add a label to each indicator paths
-//TODO Check better the indicator functions and remove the 'CDL' from the candlestick column (dataset)
 
 window.onload = function () {
-    main()
+    mainMenu();
+    mainSVG()
 }
 
-function main() {
+function mainSVG() {
     {
-        width = 1500,
-            height = 800,
+        width = window.innerWidth,
+            height = window.screen.height,
             marginLeft = 80,
             marginTop = 40,
             marginBottom = 15
@@ -201,7 +201,7 @@ function addIndicatorFunction(funName, funWindowSize) {
         indicator_json["global_max"] = localMax;
 
     // Sort
-    indicator_json['functions'] = indicator_json['functions'].sort(function(x, y){
+    indicator_json['functions'] = indicator_json['functions'].sort(function (x, y) {
         return d3.ascending(x['window_size'], y['window_size']);
     })
 }
@@ -383,7 +383,10 @@ function ATR(data, windows_size = 14) {
 
 function NATR(data, windows_size = 14) {
     const atr = ATR(data, windows_size);
-    return atr.map((v, i) => v / +data[i].Close * 100);
+
+    let natr = atr.map((v, i) => v / +data[i].Close * 100)
+    return natr;
+
 }
 
 // https://en.wikipedia.org/wiki/Relative_strength_index

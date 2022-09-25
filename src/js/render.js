@@ -34,7 +34,7 @@ function mainRender(
     let currHigh = height;
     let currLow = 0;
 
-    const xDomain = data.map(date);
+    let xDomain = data.map(date);
     const xRange = [marginLeft, chartWidth - marginRight]; // [left, right]
 
     const Yo = data.map(open);
@@ -48,7 +48,7 @@ function mainRender(
 
     // Get xAxis
     const [xScale, xAxis] = getAxisX(timeframe, xDomain, xRange, xPadding);
-
+    xDomain = xScale.domain();
     createCandlestickChart(
         Yo,
         Yc,
@@ -520,44 +520,58 @@ function getAxisX(timeframe, xDomain, xRange, xPadding) {
     // Christmas, but these are infrequent and allow the labeling of Mondays. As a
     // band scale, we specify explicit tick values.
     let ticksRangeFun;
-    let datesRangeFun;
     let xFormat;
     let tickFun;
-    let tickStep;
+    let tickStep=0;
+    let oneEleOffest = 0;
+    let lastEle = xDomain.slice(-1);
     switch (timeframe) {
-        case "15Min":
-            ticksRangeFun = (start, stop) => d3.utcMinute.range(start, +stop + 1, 90);
+        case "1Min":
             xFormat = "%H:%M"; // hour minute
             tickFun = d3.utcMinute;
-            tickStep = 90;
+            oneEleOffest = 1
+            tickStep = oneEleOffest*20;
+            break;
+        case "15Min":
+            xFormat = "%H:%M"; // hour minute
+            tickFun = d3.utcMinute;
+            oneEleOffest = 15
+            tickStep = oneEleOffest*4;
             break;
         case "1H":
-            ticksRangeFun = (start, stop) => d3.utcHour.range(start, +stop + 1, 3);
-            datesRangeFun = (start, stop) => d3.utcHours(start, +stop + 1);
             xFormat = "%I:%M"; // hour minute
             tickFun = d3.utcHour;
-            tickStep = 3;
+            oneEleOffest = 1
+            tickStep = oneEleOffest*3;
             break;
         case "6H":
-            ticksRangeFun = (start, stop) => d3.utcHour.range(start, +stop + 1, 24);
             xFormat = "%b %d"; // month day
+            tickFun = d3.utcHour;
+            oneEleOffest = 6
+            tickStep = oneEleOffest*4;
             break;
 
         case "1D":
-            ticksRangeFun = (start, stop) => d3.utcDay.range(start, +stop + 1, 14);
-            // xDomain.push(d3.utcDay.offset(new Date(),1))
             xFormat = "%b %d"; // month day
+            tickFun = d3.utcDay
+            oneEleOffest = 1
+            tickStep = oneEleOffest*14;
             break;
         case "1W":
-            ticksRangeFun = (start, stop) => d3.utcWeek.range(start, +stop + 1, 4);
-            xFormat = "%b %d"; // hour minute
+            xFormat = "%b %d"; // month day
+            tickFun = d3.utcWeek;
+            oneEleOffest = 1
+            tickStep = oneEleOffest*4;
             break;
         case "1M":
-            ticksRangeFun = (start, stop) => d3.utcMonth.range(start, +stop + 1);
-            xFormat = "%M"; // hour minute
+            xFormat = "%M"; // month
+            tickFun = d3.utcMonth;
+            oneEleOffest = 1
+            tickStep = oneEleOffest*1;
             break;
     }
-
+    xDomain.push(tickFun.offset(lastEle, oneEleOffest))
+    ticksRangeFun = (start, stop) => tickFun.range(start, +stop + 1, tickStep);
     const xTicks = ticksRangeFun(d3.min(xDomain), d3.max(xDomain));
 
     let xScale = d3.scaleBand(xDomain, xRange).padding(xPadding);

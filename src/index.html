@@ -5,6 +5,10 @@
     <link rel="stylesheet" href="temp_style.css"/>
     <link rel="shortcut icon" href="./favicon.ico">
 
+    <!--    google icons-->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0"/>
+    <!--    -->
     <script src="/node_modules/jquery/dist/jquery.js" type="text/javascript"></script>
     <script type="text/javascript" src="js/render.js"></script>
     <script type="text/javascript" src="js/actionsHTML.js"></script>
@@ -13,40 +17,163 @@
 </head>
 <body>
 <div class="tooltip"></div>
-<!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
-<select id="selectButton"></select>
-<select id="selectFrameTime"></select>
-<div onchange="setOHCLChartStyleHTML(event)">
-    <input type="radio" name="ohcl_style" value="candlestick" checked>Candlestick<br>
-    <input type="radio" name="ohcl_style" value="linechart">Linechart<br>
-</div>
-<!--CHECKBOX TO TOGGLE THE CANDLESTICK PATTERNS VISIBILITY -->
-<br>
-<label>Candlestick patterns</label>
-<input id="enableCandlestickPattern" type="checkbox" onchange="setPatternsVisibilityHTML(this.checked)"/>
-<!--CHECKBOX TO TOGGLE THE OVERLAPPING INDICATORS VISIBILITY -->
-<br>
-<label>Overlapping indicators</label>
-<input id="enableOverlappingIndicators" type="checkbox"
-       onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
-<!--CHECKBOX TO TOGGLE THE WINDOWS VISIBILITY -->
-<br>
-<label>Indicator windows</label>
-<input id="enableIndicatorWindows" type="checkbox" onchange="setIndicatorWindowsVisibilityHTML(this.checked)"/>
+<!--<br>-->
 
-<!--DROPDOWN TO ADD AN INDICATOR AND ITS WINDOW SIZE-->
-<br>
-<select id="selectFunction">
-    <option value="NATR">NATR</option>
-    <option value="SMA" selected>SMA</option>
-    <option value="EMA">EMA</option>
-    <option value="RSI">RSI</option>
-</select>
-<input type="number" placeholder="14" id="avg">
-<input type="button" value="Add"
-       onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
-<!--SVG-->
-<br>
-<svg width="500" height="500" id="container"></svg>
+<div class="row">
+    <div class="left-column">
+        <svg width="500" height="500" id="container"></svg>
+    </div>
+    <div class="right-column">
+        <button class="collapsible"><h2>Menu</h2></button>
+        <div class="content">
+            <!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
+            <fieldset>
+                <legend>Dataset</legend>
+                <label for="selectButton">Resource
+                    <select id="selectButton"></select></label>
+                <br>
+                <label for="selectFrameTime">Time-frame</label>
+                <select id="selectFrameTime"></select>
+            </fieldset>
+            <!-- OHCL style-->
+            <br><br>
+            <fieldset onchange="setOHCLChartStyleHTML(event)">
+                <legend>OHCL style</legend>
+                <input type="radio" name="ohcl_style" value="candlestick" checked>Candlestick<br>
+                <input type="radio" name="ohcl_style" value="linechart">Linechart<br>
+            </fieldset>
+            <!--CHECKBOX TO TOGGLE THE CANDLESTICK PATTERNS VISIBILITY -->
+            <br>
+            <fieldset>
+                <legend>Options</legend>
+                <label>Candlestick patterns</label>
+                <input id="enableCandlestickPattern" type="checkbox"
+                       onchange="setPatternsVisibilityHTML(this.checked)"/>
+                <!--CHECKBOX TO TOGGLE THE OVERLAPPING INDICATORS VISIBILITY -->
+                <br>
+                <label>Overlapping indicators</label>
+                <input id="enableOverlappingIndicators" type="checkbox"
+                       onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
+                <!--CHECKBOX TO TOGGLE THE WINDOWS VISIBILITY -->
+                <br>
+                <label>Indicator windows</label>
+                <input id="enableIndicatorWindows" type="checkbox"
+                       onchange="setIndicatorWindowsVisibilityHTML(this.checked)"/>
+            </fieldset>
+            <!--DROPDOWN TO ADD AN INDICATOR AND ITS WINDOW SIZE-->
+            <br>
+            <select id="selectFunction">
+                <option value="NATR">NATR</option>
+                <option value="SMA" selected>SMA</option>
+                <option value="EMA">EMA</option>
+                <option value="RSI">RSI</option>
+            </select>
+            <input type="number" placeholder="14" id="avg">
+            <input type="button" value="Add"
+                   onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
+
+        </div>
+        <!--        <button class="collapsible">Open Section 2</button>-->
+        <!--        <div class="content">-->
+        <!--            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et-->
+        <!--                dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip-->
+        <!--                ex ea commodo consequat.</p>-->
+        <!--        </div>-->
+        <button class="collapsible"><h2>Help</h2></button>
+        <div class="content">
+            <h3>What's a candlestick pattern?</h3>
+            <p>A candlestick pattern is a pattern (a specific combination) of candlesticks that can be used to predict
+                the
+                future price movement of a stock.
+                Candlestick patterns are a form of technical analysis that can be used to help determine the
+                current trend and the future direction of a stock.</p>
+
+            <h3>What's an indicator?</h3>
+            <p>An indicator is a mathematical calculation based on previous stock data, like price and volume, that aims
+                to forecast the future financial market direction.<br><br>
+                An indicator can fall into two categories: <br>
+            <ul>
+                <li><b>Leading</b>, which tries to predict the future data.</li>
+                <li><b>Lagging</b>, that gives a signal after a trend started.</li>
+            </ul>
+            Furthermore, we can divide indicators into four types:
+            <ol>
+                <li><b>Trend</b>. Trends indicator measure the direction of a trend and they usually plotted on the
+                    candlestick graph.
+                </li>
+                <li><b>Momentum</b>. They identify the speed of price movement by comparing the price over time.</li>
+                <li><b>Volatility</b>. They measure the rate of price movement regardless the trend direction by
+                    comparing the highest/lowest price over a period of time.
+                </li>
+                <li><b>Volume</b>. They measure the trend strength based on the volume.</li>
+            </ol>
+            </p>
+
+            <h3>Types</h3>
+            <p>A candlestick pattern is a pattern (a specific combination) of candles that can be used to predict the
+                future price movement of a stock.
+                Candlestick patterns are a form of technical analysis that can be used to help determine the
+                current trend and the future direction of a stock.<br><br>
+
+
+            <table class="styled-table">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>TYPE</th>
+                    <th>LEADING</th>
+                    <th>LAGGING</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="description"><label>Moving Averages</label><br>
+                        <!-- <span class="material-symbols-outlined">info</span>-->
+                        <p>
+                            Are used to identify current price trends and the potential for a change in an established
+                            trend.<br><br>If a shorter-term simple moving average (e.g.
+                            14) is above a longer-term average (e.g. 24), an uptrend is expected. On the other hand, if
+                            the
+                            long-term average is above a shorter-term average then a downtrend might be the expected
+                            outcome.<br><br>A Simple Moving Average (SMA) gives the same weight to all data points in
+                            the
+                            working window, while an Exponential Moving Average (EMA) gives more weight to the most
+                            recent
+                            data.
+                        </p>
+                    </td>
+                    <td>1°</td>
+                    <td></td>
+                    <td>V</td>
+                </tr>
+                <tr>
+                    <td class="description"><label>Average True Range</label><br>
+                        <p>
+                            Is used to express the price volatility.<br><br>If you want to compare multiple ATR curves,
+                            you'd better use the Normalized ATR (NATR).
+                        </p>
+                    </td>
+                    <td>3°</td>
+                    <td>V</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="description"><label>Relative Strength Index</label><br>
+                        <p>
+                            Measures the stock strength/weakness with a value between 0 and 100. Values above 70 are
+                            considered to be in overbought territory, and RSI readings lower than the 30 level are
+                            considered to be in oversold territory. In between the 30 and 70 level is considered
+                            neutral, with the 50 level a sign of no trend.<br><br>
+                        </p>
+                    </td>
+                    <td>2°</td>
+                    <td></td>
+                    <td>V</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 </body>
 </html>
