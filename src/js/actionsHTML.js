@@ -37,8 +37,6 @@ function addIndicatorFunctionHTML(funName, funWindowsSize) {
 
 function setOHCLChartStyleHTML(event) {
     let style = event.target.value
-    console.log("setOHCLChartStyle: before | " + getOHCLChartStyle())
     setOHCLChartStyle(style)
-    console.log("setOHCLChartStyle: after | " + getOHCLChartStyle())
     updateRendering()
 }

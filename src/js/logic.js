@@ -10,9 +10,10 @@ var _indicator_windows_enabled = false;
 var _overlap_indicators_json = {}
 var _volatility_indicators_json = {}
 var _strength_indicators_json = {}
+var _volume_indicators_json = {}
 
 //TODO Add a label to each indicator paths
-
+//TODO dropdown option and second input field for ADOSC
 window.onload = function () {
     mainMenu();
     mainSVG()
@@ -156,7 +157,10 @@ function load_data(filename, timeframe) {
             _curr_data = data;
             _curr_timeframe = timeframe;
 
-            // ADD DEFAULT INDICATORS FOR PRACTIC
+            //tempo
+            addIndicatorFunction("ADOSC", undefined, 3, 10);
+
+            // ADD DEFAULT INDICATORS FOR PRACTICALITY
             // Overlap indicator goes directly on the chart
             addIndicatorFunction("SMA", 24)
             addIndicatorFunction("EMA", 14)
@@ -182,15 +186,20 @@ function resetIndicators() {
     _overlap_indicators_json = {"global_max": 0, "functions": []};
     _volatility_indicators_json = {"global_max": 0, "functions": []};
     _strength_indicators_json = {"global_max": 0, "functions": []};
+    _volume_indicators_json = {"global_max": 0, "global_min":0,"functions": []};
 }
 
-function addIndicatorFunction(funName, funWindowSize) {
+
+function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindowSize = undefined, funLargeWindowSize = undefined) {
     const funData = eval(`${funName}(${JSON.stringify(_curr_data)}, ${funWindowSize})`);
     const funColor = getRandomColor();
     const indicator_json = getIndicatorsJSON(funName);
     const localMax = d3.max(funData);
 
     indicator_json['functions'][Object.keys(indicator_json['functions']).length] = {
+        ...(funWindowSize !== undefined) && {"window_size": funWindowSize},
+        ...(funSmallWindowSize !== undefined) && {"small_window_size": funSmallWindowSize},
+        ...(funLargeWindowSize !== undefined) && {"large_window_size": funLargeWindowSize},
         "name": funName,
         "color": funColor,
         "window_size": funWindowSize,
@@ -199,7 +208,13 @@ function addIndicatorFunction(funName, funWindowSize) {
     }
     if (indicator_json["global_max"] < localMax)
         indicator_json["global_max"] = localMax;
+    if ("global_min" in indicator_json) {
+        const local_min = d3.min(funData);
+        if (local_min < indicator_json["global_min"]) {
+            indicator_json["global_min"] = local_min;
+        }
 
+    }
     // Sort
     indicator_json['functions'] = indicator_json['functions'].sort(function (x, y) {
         return d3.ascending(x['window_size'], y['window_size']);
@@ -251,10 +266,15 @@ function getStrengthIndicatorsJSON() {
     return _strength_indicators_json;
 }
 
+function getVolumeIndicatorsJSON() {
+    return _volume_indicators_json;
+}
+
 function getIndicatorsJSON(indicatorName) {
     const volatility_list = ["ATR", "NATR"];
     const overlap_list = ["SMA", "EMA"];
     const strength_list = ["RSI"];
+    const volume_list = ["ADOSC"];
 
     if (overlap_list.includes(indicatorName))
         return _overlap_indicators_json;
@@ -262,6 +282,8 @@ function getIndicatorsJSON(indicatorName) {
         return _volatility_indicators_json;
     else if (strength_list.includes(indicatorName))
         return _strength_indicators_json;
+    else if (volume_list.includes(indicatorName))
+        return _volume_indicators_json;
     else
         return null;
 }
@@ -417,6 +439,40 @@ function RSI(data, windows_size = 14) {
         RSI.push(100 - (100 / (1 + RS[i])));
     }
     return RSI;
+}
+
+// A/D Oscillator
+function AD(data) {
+    const AD = [0];
+
+    let prev_AD = 0;
+    for (let i = 1; i < data.length; ++i) {
+        const current_close = +data[i].Close;
+        const current_volume = +data[i].Volume;
+        const current_high = +data[i].High;
+        const current_low = +data[i].Low;
+
+        const money_flow_multiplier = ((current_close - current_low) - (current_high - current_close)) / (current_high - current_low);
+        const money_flow_volume = money_flow_multiplier * current_volume;
+        const current_AD = prev_AD + money_flow_volume;
+
+        AD.push(current_AD);
+        prev_AD = current_AD;
+    }
+
+    return AD;
+}
+
+// https://en.wikipedia.org/wiki/Chaikin_Analytics
+function ADOSC(data, small_window = 3, large_window = 10) {
+    const ad = AD(data);
+
+    const EMA_AD_small = EMA_close(ad, small_window);
+    const EMA_AD_large = EMA_close(ad, large_window);
+
+    const Chaikin = EMA_AD_small.map((v, i) => i >= large_window ? v - EMA_AD_large[i] : 0);
+
+    return Chaikin;
 }
 
 //////////////////////////

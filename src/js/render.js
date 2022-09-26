@@ -31,8 +31,8 @@ function mainRender(
     } = {}) {
     let prevLow;
     let prevHigh;
-    let currHigh = height;
-    let currLow = 0;
+    let currLow = height;
+    let currHigh = 0;
 
     let xDomain = data.map(date);
     const xRange = [marginLeft, chartWidth - marginRight]; // [left, right]
@@ -67,14 +67,14 @@ function mainRender(
     ////// Create a second graph below the first one: ATR //////
     prevLow = currLow;
     prevHigh = currHigh;
-    currLow = prevHigh * 0.8;
-    currHigh = prevHigh * 1;
+    currHigh = prevLow * 0.8;
+    currLow = prevLow * 1;
 
 
     createVolatilityChart(
         getVolatilityIndicatorsJSON(),
         xDomainAsRange, xScale, xAxis,
-        currHigh, currLow,
+        currLow, currHigh,
         marginTop, marginRight, marginLeft, marginBottom,
         chartWidth,
         stroke, strokeLinecap, colors);
@@ -82,11 +82,26 @@ function mainRender(
     ////// Create third diagram: RSI //////
     prevLow = currLow;
     prevHigh = currHigh;
-    currHigh = prevHigh;
-    currLow = currHigh * 1.2;
+    currHigh = prevLow * 1;
+    currLow = prevLow * 1.2;
 
     createStrengthChart(
         getStrengthIndicatorsJSON(),
+        xDomainAsRange, xScale, xAxis,
+        currLow, currHigh,
+        marginTop, marginRight, marginLeft, marginBottom,
+        chartWidth,
+        stroke, strokeLinecap, colors
+    )
+
+    // ////// Create 4° diagram: volume //////
+    prevLow = currLow;
+    prevHigh = currHigh;
+    currHigh = prevLow * 1;
+    currLow = prevLow * 1.2;
+
+    createVolumeChart(
+        getVolumeIndicatorsJSON(),
         xDomainAsRange, xScale, xAxis,
         currLow, currHigh,
         marginTop, marginRight, marginLeft, marginBottom,
@@ -203,7 +218,7 @@ High: ${formatValue(highs[i])}`;
             // .attr("y1", i => !isNaN( yScale(Yc[i+1]) ) ? (yScale(Yc[i])) :"" )
             // .attr("y2", i => yScale(Yc[i+1]))
             //d[i][j] i=0,1 j=0,1. i=candle, j=x,y
-            .attr("x1", d => 0)
+            .attr("x1", () => 0)
             .attr("x2", d => d[1][0] - d[0][0])
             .attr("y1", d => d[0][1])
             .attr("y2", d => d[1][1])
@@ -310,7 +325,7 @@ function createVolatilityChart(
     const yAxisLabel = '↑ Volatility ($%)';
     const nTicks = yHigh / 80;
     const ticks = undefined;
-    const yDomain = [Math.floor(0), Math.ceil(volatility_functions_json['global_max'])]
+    const yDomain = [0, Math.ceil(volatility_functions_json['global_max'])]
 
 
     // REST OF THE CODE
@@ -340,6 +355,34 @@ function createStrengthChart(
 
     // REST OF THE CODE
     genericIndicatorChart(strength_functions_json,
+        xDomainAsRange, xScale, xAxis,
+        yLow, yHigh,
+        marginTop, marginRight, marginLeft, marginBottom,
+        chartWidth,
+        stroke, strokeLinecap, colors,
+        id, yAxisLabel, nTicks, ticks, yDomain);
+}
+
+function createVolumeChart(
+    volume_functions_json,
+    xDomainAsRange, xScale, xAxis,
+    yLow, yHigh,
+    marginTop, marginRight, marginLeft, marginBottom,
+    chartWidth,
+    stroke, strokeLinecap, colors
+) {
+
+    // VARIABLES
+    const id = "adosc";
+    const yAxisLabel = '↑ Volume';
+    const nTicks = yHigh / 120;
+    const ticks = undefined;
+    const yDomain = [Math.floor(
+        Math.min(0, 'global_min' in volume_functions_json ? volume_functions_json['global_min'] : 0)
+    ), Math.ceil(volume_functions_json['global_max'])]
+
+    // REST OF THE CODE
+    genericIndicatorChart(volume_functions_json,
         xDomainAsRange, xScale, xAxis,
         yLow, yHigh,
         marginTop, marginRight, marginLeft, marginBottom,
@@ -442,6 +485,8 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
         const new_data = value['data'];
         const color = value['color'];
         const window_size = value['window_size'];
+        const small_window_size = value['small_window_size'];
+        const large_window_size = value['large_window_size'];
 
         container
             .append('path')
@@ -449,7 +494,9 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
             .attr('id', `${name}-${id}`)
             .datum(new_data)
             .attr("fill", "none")
-            .attr('window_size', window_size)
+            .attr('window_size', () => window_size ? window_size : null)
+            .attr('small_window_size', () => small_window_size ? small_window_size : null)
+            .attr('large_window_size', () => large_window_size ? large_window_size : null)
             .attr("stroke", color)
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
@@ -499,9 +546,16 @@ function addIndicatorTitle(gList, functions_json) {
             const new_data = value['data'];
             const color = value['color'];
             const window_size = value['window_size'];
+            const small_window_size = value['small_window_size'];
+            const large_window_size = value['large_window_size'];
+
 
             title = ` ${formatValue(new_data[i])} (${formatChange(new_data[i - 1], new_data[i])})`
-            title_html += `<p><span style="color:${color};"><b>${name}(${window_size}):</b></span>${title}</p>`;
+            if (window_size !== undefined) {
+                title_html += `<p><span style="color:${color};"><b>${name}(${window_size}):</b></span>${title}</p>`;
+            } else {
+                title_html += `<p><span style="color:${color};"><b>${name}(${small_window_size}-${large_window_size}):</b></span>${title}</p>`;
+            }
             j++;
         }
         tooltip.html(title_html)
@@ -522,7 +576,7 @@ function getAxisX(timeframe, xDomain, xRange, xPadding) {
     let ticksRangeFun;
     let xFormat;
     let tickFun;
-    let tickStep=0;
+    let tickStep = 0;
     let oneEleOffest = 0;
     let lastEle = xDomain.slice(-1);
     switch (timeframe) {
@@ -530,44 +584,44 @@ function getAxisX(timeframe, xDomain, xRange, xPadding) {
             xFormat = "%H:%M"; // hour minute
             tickFun = d3.utcMinute;
             oneEleOffest = 1
-            tickStep = oneEleOffest*20;
+            tickStep = oneEleOffest * 20;
             break;
         case "15Min":
             xFormat = "%H:%M"; // hour minute
             tickFun = d3.utcMinute;
             oneEleOffest = 15
-            tickStep = oneEleOffest*4;
+            tickStep = oneEleOffest * 4;
             break;
         case "1H":
             xFormat = "%I:%M"; // hour minute
             tickFun = d3.utcHour;
             oneEleOffest = 1
-            tickStep = oneEleOffest*3;
+            tickStep = oneEleOffest * 3;
             break;
         case "6H":
             xFormat = "%b %d"; // month day
             tickFun = d3.utcHour;
             oneEleOffest = 6
-            tickStep = oneEleOffest*4;
+            tickStep = oneEleOffest * 4;
             break;
 
         case "1D":
             xFormat = "%b %d"; // month day
             tickFun = d3.utcDay
             oneEleOffest = 1
-            tickStep = oneEleOffest*14;
+            tickStep = oneEleOffest * 14;
             break;
         case "1W":
             xFormat = "%b %d"; // month day
             tickFun = d3.utcWeek;
             oneEleOffest = 1
-            tickStep = oneEleOffest*4;
+            tickStep = oneEleOffest * 4;
             break;
         case "1M":
             xFormat = "%M"; // month
             tickFun = d3.utcMonth;
             oneEleOffest = 1
-            tickStep = oneEleOffest*1;
+            tickStep = oneEleOffest * 1;
             break;
     }
     xDomain.push(tickFun.offset(lastEle, oneEleOffest))
@@ -653,48 +707,74 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
     }).selectAll("path").each(function (d, i) {
             // Get its window_size and color
             let window_size = d3.select(this).attr("window_size")
+            let large_window_size = d3.select(this).attr("large_window_size")
+            let small_window_size = d3.select(this).attr("small_window_size")
             let color = turn_on ? d3.select(this).attr("stroke") : 'transparent';
+
             // The minimum index is 0
-            let min_idx = Math.max(0, idx - window_size);
+            let min_idx
+
 
             // Highlight the rects from i-window_size to i-1
             if (_TEMP_SWITCH_WINDOW_MODE) {
+                if (window_size)
+                    min_idx = Math.max(0, idx - window_size)
+                else
+                    min_idx = Math.max(0, idx - large_window_size)
                 d3.range(min_idx, idx).map(j =>
                     d3.select(`g#candlestick-container.data-${j} rect`)
                         .attr("fill", color)
                 );
             } else {
-                let c = d3.select('g.data-class');
+                let dataContainer = d3.select('g.data-class');
                 if (!turn_on) {
-                    c.select('rect#window-rect').remove();
+                    dataContainer.selectAll('rect#window-rect').remove();
                 } else {
-                    let firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
+                    let firstG;
                     let lastG = d3.select(`g#candlestick-container.data-${idx - 1}`)
-                    let firstRect = firstG.select("rect")
-                    let lastRect = lastG.select("rect")
 
-                    let firstX =
-                        +firstG.attr("transform").split(",")[0].split("(")[1]
-                        + +firstRect.attr("x")
+                    if (window_size) {
+                        min_idx = Math.max(0, idx - window_size)
+                        let firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
+                        f(dataContainer, firstG, lastG, window_size, color);
 
-                    let lastX = (+lastG.attr("transform").split(",")[0].split("(")[1])
-                        + (+lastRect.attr("x"))
-                        + +lastRect.attr("width")
+                    } else {
+                        min_idx = Math.max(0, idx - large_window_size)
+                        firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
+                        f(dataContainer, firstG, lastG, window_size, color);
 
-                    c
-                        .append('rect')
-                        .attr('id', 'window-rect')
-                        .attr("fill", "none")
-                        .attr("stroke", color)
-                        .attr("stroke-width", 1/window_size*40+.5) // > window_size => < stroke-width
-                        // .attr("stroke-width", window_size/5)
-                        // .attr("stroke-width", window_size)
-                        .attr('x', firstX)
-                        .attr('y', firstRect.attr('y'))
-                        .attr('width', lastX - firstX)
-                        .attr('height', firstRect.attr('height'))
+                        min_idx = Math.max(0, idx - small_window_size)
+                        firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
+                        f(dataContainer, firstG, lastG, window_size, color);
+                    }
                 }
             }
         }
     )
+}
+
+function f(dataContainer, firstG, lastG, window_size, color) {
+    let firstRect = firstG.select("rect")
+    let lastRect = lastG.select("rect")
+
+    let firstX =
+        +firstG.attr("transform").split(",")[0].split("(")[1]
+        + +firstRect.attr("x")
+
+    let lastX = (+lastG.attr("transform").split(",")[0].split("(")[1])
+        + (+lastRect.attr("x"))
+        + +lastRect.attr("width")
+
+    dataContainer
+        .append('rect')
+        .attr('id', 'window-rect')
+        .attr("fill", "none")
+        .attr("stroke", color)
+        .attr("stroke-width", 1 / window_size * 40 + .5) // > window_size => < stroke-width
+        // .attr("stroke-width", window_size/5)
+        // .attr("stroke-width", window_size)
+        .attr('x', firstX)
+        .attr('y', firstRect.attr('y'))
+        .attr('width', lastX - firstX)
+        .attr('height', firstRect.attr('height'))
 }
