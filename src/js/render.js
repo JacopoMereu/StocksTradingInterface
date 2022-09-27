@@ -210,14 +210,21 @@ High: ${formatValue(highs[i])}`;
         //         console.log("d", d)
         //         return colors[1 + Math.sign(d[1][1] - d[0][1])]
         //     })
+        // thick
         gElementsList.append("line")
             .data(d3.pairs(data2))
             .attr('class', 'style_linechart')
-            // .attr("x1", (d,i) => 0 })
-            // .attr("x2", (d,i) => xScale(xDomain[i+1])-xScale(xDomain[i]))
-            // .attr("y1", i => !isNaN( yScale(Yc[i+1]) ) ? (yScale(Yc[i])) :"" )
-            // .attr("y2", i => yScale(Yc[i+1]))
-            //d[i][j] i=0,1 j=0,1. i=candle, j=x,y
+            .attr("x1", () => 0)
+            .attr("x2", d => d[1][0] - d[0][0])
+            .attr("y1", d => d[0][1])
+            .attr("y2", d => d[1][1])
+            .style("stroke-width", "3px")
+            .style("stroke", 'black');
+
+        // thin
+        gElementsList.append("line")
+            .data(d3.pairs(data2))
+            .attr('class', 'style_linechart')
             .attr("x1", () => 0)
             .attr("x2", d => d[1][0] - d[0][0])
             .attr("y1", d => d[0][1])
@@ -237,12 +244,24 @@ High: ${formatValue(highs[i])}`;
             .attr("y2", i => yScale(Yh[i]));
 
         // Real body of the candle
-        gElementsList.append("line")
+        // line real body
+        // gElementsList.append("line")
+        //     .attr("class", "style_candlestick")
+        //     .attr("y1", i => yScale(Yo[i]))
+        //     .attr("y2", i => yScale(Yc[i]))
+        //     .attr("stroke-width", xScale.bandwidth())
+        //     .attr("stroke", i => colors[1 + Math.sign(Yo[i] - Yc[i])]);
+
+        // rect real body
+        gElementsList.append("rect")
+            .style("stroke-width", "1")
             .attr("class", "style_candlestick")
-            .attr("y1", i => yScale(Yo[i]))
-            .attr("y2", i => yScale(Yc[i]))
-            .attr("stroke-width", xScale.bandwidth())
-            .attr("stroke", i => colors[1 + Math.sign(Yo[i] - Yc[i])]);
+            .style("fill", i => colors[1 + Math.sign(Yo[i] - Yc[i])])
+            .style("stroke", "black")
+            .attr("x", -xScale.bandwidth() / 2)
+            .attr("y", i => yScale(Math.max(Yc[i],Yo[i])) )
+            .attr("width", xScale.bandwidth())
+            .attr("height", i => yScale(Math.min(Yc[i],Yo[i])) - yScale(Math.max(Yc[i],Yo[i]))) ;
 
         // Candlestick pattern text
         gElementsList.append('text')
@@ -250,11 +269,11 @@ High: ${formatValue(highs[i])}`;
             .attr('color', i => {
                 switch (dCandlePatternType[i]) {
                     case "Bearish":
-                        return 'red';
+                        return colors[2];
                     case "Bullish":
-                        return 'green';
+                        return colors[0];
                     default:
-                        return 'orange';
+                        return colors[1];
                 }
             })
             .attr('text-anchor', 'middle')

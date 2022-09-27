@@ -32,8 +32,18 @@
                 <label for="selectButton">Resource
                     <select id="selectButton"></select></label>
                 <br>
-                <label for="selectFrameTime">Time-frame</label>
-                <select id="selectFrameTime"></select>
+                <label for="selectFrameTime">Time-frame<select id="selectFrameTime"></select></label>
+                <br>
+                <svg viewBox="0 0 100 20" style="height: 20px">
+                    <g onclick="setColorsHTML('colors1')">
+                        <rect id="rect" width="20" height="20" fill="green" stroke="black" stroke-width="1"/>
+                        <rect id="rect" x="20" width="20" height="20" fill="red" stroke="black" stroke-width="1"/>
+                    </g>
+                    <g transform="translate(50,0)" onclick="setColorsHTML('colors2')">
+                        <rect id="rect" width="20" height="20" fill="white" stroke="black" stroke-width="1"/>
+                        <rect id="rect" x="20" width="20" height="20" fill="black" stroke="black" stroke-width="1"/>
+                    </g>
+                </svg>
             </fieldset>
             <!-- OHCL style-->
             <br><br>

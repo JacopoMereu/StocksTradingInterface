@@ -15,6 +15,10 @@ function mainMenu() {
     }
 }
 
+function setColorsHTML(colors){
+    setColors(colors)
+    updateRendering()
+}
 function setPatternsVisibilityHTML(isChecked) {
     setPatternsVisibility(isChecked)
     updateRendering()

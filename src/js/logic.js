@@ -2,6 +2,7 @@
 var _curr_data = [];
 var _curr_timeframe = "";
 var _ohcl_chart_style = "candlestick";
+var _curr_colors = "colors1";
 // checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
@@ -14,6 +15,7 @@ var _volume_indicators_json = {}
 
 //TODO Add a label to each indicator paths
 //TODO dropdown option and second input field for ADOSC
+//TODO Add number input to reduce data
 window.onload = function () {
     mainMenu();
     mainSVG()
@@ -125,6 +127,7 @@ const render_data = (data, timeframe) => {
             marginLeft: 80,
             marginTop: 40,
             marginBottom: 30,
+            colors : getColors()
         })
 
 
@@ -186,9 +189,8 @@ function resetIndicators() {
     _overlap_indicators_json = {"global_max": 0, "functions": []};
     _volatility_indicators_json = {"global_max": 0, "functions": []};
     _strength_indicators_json = {"global_max": 0, "functions": []};
-    _volume_indicators_json = {"global_max": 0, "global_min":0,"functions": []};
+    _volume_indicators_json = {"global_max": 0, "global_min": 0, "functions": []};
 }
-
 
 function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindowSize = undefined, funLargeWindowSize = undefined) {
     const funData = eval(`${funName}(${JSON.stringify(_curr_data)}, ${funWindowSize})`);
@@ -221,6 +223,10 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
     })
 }
 
+function setColors(colors) {
+    _curr_colors = colors;
+}
+
 function setOverlappingIndicatorsVisibility(isChecked) {
     _overlap_indicators_enabled = isChecked;
 }
@@ -238,6 +244,12 @@ function setOHCLChartStyle(style) {
 }
 
 // GETTERS
+function getColors() {
+    if(_curr_colors === "colors1")
+        return ["#4daf4a", "#999999", "#e41a1c"]
+    else if(_curr_colors === "colors2")
+        return ["#ffffff", "#999999", "#000000"]
+}
 function getOHCLChartStyle() {
     return _ohcl_chart_style;
 }
@@ -416,8 +428,8 @@ function RSI(data, windows_size = 14) {
     const RSI = [];
 
     // get close value where the current value is greater than the previous value, 0 otherwise
-    const U = [];
-    const D = [];
+    const U = [0];
+    const D = [0];
     for (let i = 1; i < data.length; ++i) {
         const current_close = +data[i].Close;
         const previous_close = +data[i - 1].Close;
@@ -429,6 +441,7 @@ function RSI(data, windows_size = 14) {
             D.push(previous_close - current_close);
         }
     }
+    console.log("IO", data.length, U.length)
 
     const EMA_U = EMA_close(U, windows_size);
     const EMA_D = EMA_close(D, windows_size);
@@ -441,7 +454,7 @@ function RSI(data, windows_size = 14) {
     return RSI;
 }
 
-// A/D Oscillator
+// https://en.wikipedia.org/wiki/Accumulation/distribution_index
 function AD(data) {
     const AD = [0];
 
@@ -452,6 +465,7 @@ function AD(data) {
         const current_high = +data[i].High;
         const current_low = +data[i].Low;
 
+        // close --> low => mfm --> -1    || close --> high => mfm ---> +1
         const money_flow_multiplier = ((current_close - current_low) - (current_high - current_close)) / (current_high - current_low);
         const money_flow_volume = money_flow_multiplier * current_volume;
         const current_AD = prev_AD + money_flow_volume;
