@@ -261,7 +261,10 @@ High: ${formatValue(highs[i])}`;
             .attr("x", -xScale.bandwidth() / 2)
             .attr("y", i => yScale(Math.max(Yc[i],Yo[i])) )
             .attr("width", xScale.bandwidth())
-            .attr("height", i => yScale(Math.min(Yc[i],Yo[i])) - yScale(Math.max(Yc[i],Yo[i]))) ;
+            .attr("height", i => {
+                const y= yScale(Math.min(Yc[i],Yo[i])) - yScale(Math.max(Yc[i],Yo[i]));
+                return y=== 0 ? 0.1 : y;
+            }) ;
 
         // Candlestick pattern text
         gElementsList.append('text')
@@ -308,7 +311,10 @@ High: ${formatValue(highs[i])}`;
     /////
 
     // CALL THE FUNCTIONS
-    add_XAxis_Group(container, xAxis, chartHeight - marginBottom);
+    //TODO temp
+    // add_XAxis_Group(container, xAxis, chartHeight - marginBottom);
+    add_XAxis_Group(container, xAxis, 0);
+
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
     add_CandlesticksData_groups();
     add_Overlapping_Functions();
@@ -432,7 +438,8 @@ function genericIndicatorChart(functions_json,
     // Get yAxis
     const [yScale, yAxis] = getAxisY(yDomain, yRange, nTicks, ticks);
 
-    add_XAxis_Group(container, xAxis, yLow - marginBottom);
+    // TODO temp
+    // add_XAxis_Group(container, xAxis, yLow - marginBottom);
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
 
 
@@ -570,7 +577,7 @@ function addIndicatorTitle(gList, functions_json) {
 
 
             title = ` ${formatValue(new_data[i])} (${formatChange(new_data[i - 1], new_data[i])})`
-            if (window_size !== undefined) {
+            if (!isNaN(window_size)) {
                 title_html += `<p><span style="color:${color};"><b>${name}(${window_size}):</b></span>${title}</p>`;
             } else {
                 title_html += `<p><span style="color:${color};"><b>${name}(${small_window_size}-${large_window_size}):</b></span>${title}</p>`;
@@ -673,12 +680,15 @@ function add_XAxis_Group(container, xAxis, low_y) {
         .attr("class", "x-axis")
         .attr("transform", `translate(0,${low_y})`)
         .call(xAxis)
-        .call(g => g.select(".domain").remove())
-        .selectAll("text")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", "rotate(-35)")
-        .style("text-anchor", "end");
+        .call(g => g.select(".domain").remove());
+
+    //TODO tmp
+    // container
+    //     .selectAll("text")
+    //     .attr("dx", "-.8em")
+    //     .attr("dy", ".15em")
+    //     .attr("transform", "rotate(-35)")
+    //     .style("text-anchor", "end");
 }
 
 // Create g containing the y-axis (horizontal lines)

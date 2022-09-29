@@ -1,8 +1,14 @@
+// const
+const _default_sample_size = 400;
+
 // current data and timeframe
+var _curr_filename = "";
 var _curr_data = [];
+var _curr_sliced_data = [];
 var _curr_timeframe = "";
 var _ohcl_chart_style = "candlestick";
 var _curr_colors = "colors1";
+var _curr_data_sample_size = _default_sample_size;
 // checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
@@ -17,7 +23,7 @@ var _volume_indicators_json = {}
 //TODO dropdown option and second input field for ADOSC
 //TODO Add number input to reduce data
 window.onload = function () {
-    mainMenu();
+    mainMenu_SetStaticElements();
     mainSVG()
 }
 
@@ -34,12 +40,10 @@ function mainSVG() {
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
-        .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
+        .attr("style", "max-width: 100%; height: auto;")
 
     // read JSON file in data/results/header.json
-    // var b = require('data/results/header.json');
-
-    const json = (function () {
+    const json_header = (function () {
         var json = null;
         $.ajax({
             'async': false,
@@ -53,54 +57,21 @@ function mainSVG() {
         return json;
     })();
 
-    // add the options to the button
-    const allGroup = Object.keys(json)
-    // option of the resourse
-    d3.select("#selectButton")
-        .on('change', event => {
-            const new_data_filename = event.target.value;
-            const old_data_timeframe = d3.select('#selectFrameTime').property('value');
-            load_data(new_data_filename, old_data_timeframe)
-        })
-        .selectAll('myOptions')
-        .data(allGroup)
-        .enter()
-        .append('option')
-        .text(function (d) {
-            return d;
-        }) // text showed in the menu
-        .attr("value", function (d) {
-            return d;
-        }) // corresponding value returned by the button
+    // add the options to the dropdown
+    [default_filename, default_timeframe] = setDropdownOptionsHTML(json_header)
 
-    // time frame
-    const allOptions = json[allGroup[0]].map(f => f['timeframe'])
-    d3.select("#selectFrameTime")
-        .on('change', event => {
-            const old_data_filename = d3.select('#selectButton').property('value');
-            const new_data_timeframe = event.target.value;
-            load_data(old_data_filename, new_data_timeframe)
-        })
-        .selectAll('myOptions')
-        .data(allOptions)
-        .enter()
-        .append('option')
-        .text(function (d) {
-            return d;
-        }) // text showed in the menu
-        .attr("value", function (d) {
-            return d;
-        }) // corresponding value returned by the button
 
-    // load data
-    const default_filename = "btc-usd-2020"
-    const default_timeframe = "1D"
+    // load default data
     load_data(default_filename, default_timeframe)
 }
 
 //// RENDERING ///////////////////////////
 function updateRendering() {
-    render_data(_curr_data, _curr_timeframe);
+    render_data(_curr_sliced_data, _curr_timeframe);
+}
+
+function updateData() {
+    load_data(_curr_filename, _curr_timeframe, true);
 }
 
 const render_data = (data, timeframe) => {
@@ -127,7 +98,7 @@ const render_data = (data, timeframe) => {
             marginLeft: 80,
             marginTop: 40,
             marginBottom: 30,
-            colors : getColors()
+            colors: getColors()
         })
 
 
@@ -145,40 +116,57 @@ const render_data = (data, timeframe) => {
 
 };
 
-function load_data(filename, timeframe) {
+function load_data(filename, timeframe, updateFlag = false) {
 
     let folder = "data/results/";
     let ext = '.csv';
     const full_path = folder + filename + '/' + timeframe + ext
 
-    resetIndicators();
+    if (updateFlag) {
 
-    d3.csv(full_path)
-        .then(data => {
-            data = data.filter(d => d.Close !== "" || d.Open !== "" || d.High !== "" || d.Low !== "");
-            data = data.slice(-400);
-            _curr_data = data;
-            _curr_timeframe = timeframe;
+        mainMenu_UpdateDynamicElements(_curr_data)
+        _curr_sliced_data = _curr_data.slice(-getDataSampleSize());
 
-            //tempo
-            addIndicatorFunction("ADOSC", undefined, 3, 10);
+        updateIndicators();
 
-            // ADD DEFAULT INDICATORS FOR PRACTICALITY
-            // Overlap indicator goes directly on the chart
-            addIndicatorFunction("SMA", 24)
-            addIndicatorFunction("EMA", 14)
+        updateRendering();
+    } else {
+        resetIndicators();
 
-            // Volatility indicator
-            addIndicatorFunction("NATR", 14)
-            addIndicatorFunction("NATR", 24)
-            addIndicatorFunction("NATR", 50)
+        d3.csv(full_path)
+            .then(data => {
+                data = data.filter(d => d.Close !== "" || d.Open !== "" || d.High !== "" || d.Low !== "");
+                _curr_data = data;
+                mainMenu_UpdateDynamicElements(_curr_data)
+                _curr_sliced_data = data.slice(-getDataSampleSize());
+                _curr_filename = filename;
+                _curr_timeframe = timeframe;
 
-            // Momentum indicator goes on the bottom
-            addIndicatorFunction("RSI", 24)
-            addIndicatorFunction("RSI", 14)
+                // ADD DEFAULT INDICATORS FOR PRACTICALITY
+                addDefaultIndicators();
 
-            render_data(data, timeframe);
-        });
+                render_data(_curr_sliced_data, _curr_timeframe);
+            });
+    }
+
+}
+
+function addDefaultIndicators() {
+    // Overlap indicator goes directly on the chart
+    addIndicatorFunction("SMA", 24)
+    addIndicatorFunction("EMA", 14)
+
+    // Volatility indicator
+    addIndicatorFunction("NATR", 14)
+    addIndicatorFunction("NATR", 24)
+    addIndicatorFunction("NATR", 50)
+
+    // Momentum indicator goes on the bottom
+    addIndicatorFunction("RSI", 24)
+    addIndicatorFunction("RSI", 14)
+
+    // Volume indicator goes on the bottom
+    addIndicatorFunction("ADOSC", undefined, 3, 10);
 }
 
 //////////////////////////////////////////
@@ -192,16 +180,45 @@ function resetIndicators() {
     _volume_indicators_json = {"global_max": 0, "global_min": 0, "functions": []};
 }
 
+function updateIndicators() {
+    const list = [_overlap_indicators_json, _volatility_indicators_json, _strength_indicators_json, _volume_indicators_json]
+    let output = [];
+
+    for (let i = 0; i < list.length; i++) {
+        let indicator_json = list[i];
+
+        for (let j = 0; j < indicator_json.functions.length; j++) {
+            let indicator = indicator_json.functions[j];
+
+            // get name, windows size, small window size, large window size
+            let name = indicator.name;
+            let window_size = +indicator.window_size;
+            let small_window_size = +indicator.small_window_size;
+            let large_window_size = +indicator.large_window_size;
+
+            output.push([name, window_size, small_window_size, large_window_size])
+        }
+    }
+    resetIndicators()
+    output.forEach(indicator => {
+        addIndicatorFunction(indicator[0], indicator[1], indicator[2], indicator[3])
+    })
+
+}
+
 function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindowSize = undefined, funLargeWindowSize = undefined) {
-    const funData = eval(`${funName}(${JSON.stringify(_curr_data)}, ${funWindowSize})`);
+
+    const funData = isNaN(funWindowSize)
+        ? eval(`${funName}(${JSON.stringify(_curr_sliced_data)}, ${funSmallWindowSize}, ${funLargeWindowSize})`)
+        : eval(`${funName}(${JSON.stringify(_curr_sliced_data)}, ${funWindowSize})`);
     const funColor = getRandomColor();
     const indicator_json = getIndicatorsJSON(funName);
     const localMax = d3.max(funData);
 
     indicator_json['functions'][Object.keys(indicator_json['functions']).length] = {
-        ...(funWindowSize !== undefined) && {"window_size": funWindowSize},
-        ...(funSmallWindowSize !== undefined) && {"small_window_size": funSmallWindowSize},
-        ...(funLargeWindowSize !== undefined) && {"large_window_size": funLargeWindowSize},
+        ...(!isNaN(funWindowSize)) && {"window_size": funWindowSize},
+        ...(!isNaN(funSmallWindowSize)) && {"small_window_size": funSmallWindowSize},
+        ...(!isNaN(funLargeWindowSize)) && {"large_window_size": funLargeWindowSize},
         "name": funName,
         "color": funColor,
         "window_size": funWindowSize,
@@ -243,13 +260,22 @@ function setOHCLChartStyle(style) {
     _ohcl_chart_style = style;
 }
 
+function setDataSampleSize(new_size) {
+    _curr_data_sample_size = new_size;
+}
+
 // GETTERS
+function getDataSampleSize() {
+    return _curr_data_sample_size;
+}
+
 function getColors() {
-    if(_curr_colors === "colors1")
+    if (_curr_colors === "colors1")
         return ["#4daf4a", "#999999", "#e41a1c"]
-    else if(_curr_colors === "colors2")
+    else if (_curr_colors === "colors2")
         return ["#ffffff", "#999999", "#000000"]
 }
+
 function getOHCLChartStyle() {
     return _ohcl_chart_style;
 }
@@ -382,7 +408,7 @@ function ATR(data, windows_size = 14) {
         const current_low = data[current_idx].Low;
 
         // if previous close doesn't exist, return 0
-        if (previous_close === undefined) return 0;
+        if (isNaN(previous_close)) return 0;
 
         // return max of high - low, abs(high - prev_close), abs(low - prev_close)
         const high_minus_low = current_high - current_low;
@@ -441,7 +467,6 @@ function RSI(data, windows_size = 14) {
             D.push(previous_close - current_close);
         }
     }
-    console.log("IO", data.length, U.length)
 
     const EMA_U = EMA_close(U, windows_size);
     const EMA_D = EMA_close(D, windows_size);
@@ -478,7 +503,7 @@ function AD(data) {
 }
 
 // https://en.wikipedia.org/wiki/Chaikin_Analytics
-function ADOSC(data, small_window = 3, large_window = 10) {
+function ADOSC(data, small_window = 4, large_window = 7) {
     const ad = AD(data);
 
     const EMA_AD_small = EMA_close(ad, small_window);
