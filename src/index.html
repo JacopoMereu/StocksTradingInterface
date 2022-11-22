@@ -17,8 +17,18 @@
 </head>
 <body>
 <div class="tooltip"></div>
-<!--<br>-->
-
+<!--1st row: header menu -->
+<div class="row">
+    <span>
+    <p id="label_date">Put the cursor on a candle</p>
+    <p id="label_open"></p>
+    <p id="label_close"></p>
+    <p id="label_high"></p>
+    <p id="label_low"></p>
+    <p id="label_volume"></p>
+    </span>
+</div>
+<!--2nd row: OHCL DATA and side menu-->
 <div class="row">
     <div class="left-column">
         <svg id="container"></svg>
@@ -38,7 +48,8 @@
                 <br>
                 <!-- SELECT N data -->
                 <label for="selectSampleSize">N most recent data</label>
-                <input id="selectSampleSize" min="1" value="1" type="number" onblur="numericInput(this)" placeholder="Rendering might lag if too many points are selected (>1000)">
+                <input id="selectSampleSize" min="1" value="1" type="number" onblur="numericInput(this)"
+                       title="Rendering might lag if too many points are selected (>1000)">
                 /<label for="selectSampleSize" id="labelSampleSize">24</label>
                 <br>
             </fieldset>
@@ -46,9 +57,10 @@
             <br><br>
             <fieldset onchange="setOHCLChartStyleHTML(event)">
                 <legend>OHCL style</legend>
+                <!-- Radiobutton style -->
                 <input type="radio" name="ohcl_style" value="candlestick" checked>Candlestick<br>
                 <input type="radio" name="ohcl_style" value="linechart">Linechart<br>
-                <!-- Colors -->
+                <!-- Colors style -->
                 <svg viewBox="0 0 100 20" style="height: 20px">
                     <g onclick="setColorsHTML('colors1')">
                         <rect id="rect" width="20" height="20" fill="green" stroke="black" stroke-width="1"/>
@@ -80,16 +92,21 @@
             </fieldset>
             <!--DROPDOWN TO ADD AN INDICATOR AND ITS WINDOW SIZE-->
             <br>
-            <select id="selectFunction">
+            <select id="selectFunction"
+                    onchange="changeInputFieldBasedOnFunctionHTML(this.value, document.getElementById('window_input'), document.getElementById('small_window_input'), document.getElementById('large_window_input'))">
                 <option value="NATR">NATR</option>
                 <option value="SMA" selected>SMA</option>
                 <option value="EMA">EMA</option>
                 <option value="RSI">RSI</option>
+                <option value="ADOSC">ADOSC</option>
             </select>
-            <input type="number" placeholder="14" id="avg">
-            <input type="button" value="Add"
-                   onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('avg').value)">
+            <input type="number" placeholder="14" id="window_input">
+            <input type="number" placeholder="3" id="small_window_input" style="display: none">
+            <input type="number" placeholder="10" id="large_window_input" style="display: none">
 
+            <input type="button" value="Add"
+                   onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('window_input').value, document.getElementById('small_window_input').value, document.getElementById('large_window_input').value)">
+            <br>
         </div>
         <!--        <button class="collapsible">Open Section 2</button>-->
         <!--        <div class="content">-->

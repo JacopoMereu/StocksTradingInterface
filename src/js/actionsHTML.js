@@ -27,13 +27,15 @@ function mainMenu_SetStaticElements() {
 function numericInput(input) {
     // Credits: https://stackoverflow.com/questions/41444813/validation-for-input-type-number-with-minimum-and-maximum-range
     if (input.type === "number" && input.max && input.min) {
+        console.log("min", input.min, "max", input.max, "value", input.value)
         let value = +input.value
-        input.value = value // for 000 like input cleanup to 0
+        // input.value = value // for 000 like input cleanup to 0
+        console.log(input.value)
         let max = +input.max
         let min = +input.min
         if (value > max) input.value = input.max
         if (value < min) input.value = input.min
-        setDataSampleSize(value)
+        setDataSampleSize(input.value)
         updateData()
     }
 }
@@ -125,8 +127,24 @@ function setIndicatorWindowsVisibilityHTML(isChecked) {
     updateRendering()
 }
 
-function addIndicatorFunctionHTML(funName, funWindowsSize) {
-    addIndicatorFunction(funName, funWindowsSize)
+function changeInputFieldBasedOnFunctionHTML(value, window, small_window, large_window) {
+    if (value === "ADOSC") {
+        window.style.display= "none";
+        small_window.style.display = "inline";
+        large_window.style.display = "inline";
+    } else {
+        window.style.display = "inline";
+        small_window.style.display = "none";
+        large_window.style.display= "none";
+    }
+    console.log(value, window, small_window, large_window)
+}
+function addIndicatorFunctionHTML(funName, funWindowsSize=undefined, funSmallWindow=undefined, funLargeWindow=undefined) {
+    if (!(funWindowsSize || (funSmallWindow && funLargeWindow))) {
+        alert("Please enter a valid number for the window size")
+        return;
+    }
+    addIndicatorFunction(funName, funWindowsSize, funSmallWindow, funLargeWindow)
     updateRendering()
 }
 

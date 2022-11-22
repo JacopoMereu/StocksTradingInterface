@@ -20,8 +20,7 @@ var _strength_indicators_json = {}
 var _volume_indicators_json = {}
 
 //TODO Add a label to each indicator paths
-//TODO dropdown option and second input field for ADOSC
-//TODO Add number input to reduce data
+
 window.onload = function () {
     mainMenu_SetStaticElements();
     mainSVG()
@@ -35,12 +34,13 @@ function mainSVG() {
             marginTop = 40,
             marginBottom = 15
     }
-
+    console.log("height: " + height)
     const svg = d3.select("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
         .attr("style", "max-width: 100%; height: auto;")
+    console.log("height: " + svg.attr('height'));
 
     // read JSON file in data/results/header.json
     const json_header = (function () {
@@ -91,10 +91,11 @@ const render_data = (data, timeframe) => {
             low: d => +d.Low,
             open: d => +d.Open,
             close: d => +d.Close,
+            volume: d => +d.Volume,
             timeframe: timeframe,
             yLabel: "↑ Price ($)",
             width: 1500,
-            height: 800,
+            height: 700,
             marginLeft: 80,
             marginTop: 40,
             marginBottom: 30,
@@ -153,7 +154,7 @@ function load_data(filename, timeframe, updateFlag = false) {
 
 function addDefaultIndicators() {
     // Overlap indicator goes directly on the chart
-    addIndicatorFunction("SMA", 24)
+    addIndicatorFunction("SMA", 50)
     addIndicatorFunction("EMA", 14)
 
     // Volatility indicator
@@ -236,7 +237,7 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
     }
     // Sort
     indicator_json['functions'] = indicator_json['functions'].sort(function (x, y) {
-        return d3.ascending(x['window_size'], y['window_size']);
+        return d3.descending(x['window_size'], y['window_size']);
     })
 }
 
