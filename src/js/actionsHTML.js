@@ -122,6 +122,11 @@ function setOverlappingIndicatorsVisibilityHTML(isChecked) {
     updateRendering()
 }
 
+function setOverlappingTitlesVisibilityHTML(isChecked) {
+    setOverlappingTitlesVisibility(isChecked)
+    updateRendering()
+}
+
 function setIndicatorWindowsVisibilityHTML(isChecked) {
     setIndicatorWindowsVisibility(isChecked)
     updateRendering()
