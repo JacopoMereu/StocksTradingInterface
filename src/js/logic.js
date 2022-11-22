@@ -12,6 +12,7 @@ var _curr_data_sample_size = _default_sample_size;
 // checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
+var _overlap_titles_enabled = false;
 var _indicator_windows_enabled = false;
 // indicator list
 var _overlap_indicators_json = {}
@@ -249,6 +250,11 @@ function setOverlappingIndicatorsVisibility(isChecked) {
     _overlap_indicators_enabled = isChecked;
 }
 
+function setOverlappingTitlesVisibility(isChecked) {
+    console.log("IT's a me", _overlap_titles_enabled)
+    _overlap_titles_enabled = isChecked;
+}
+
 function setPatternsVisibility(isEnabled) {
     _candlestick_enabled = isEnabled;
 }
@@ -287,6 +293,10 @@ function getPatternsVisibility() {
 
 function getOverlappingIndicatorsVisibility() {
     return _overlap_indicators_enabled;
+}
+
+function getOverlappingTitlesVisibility() {
+    return _overlap_titles_enabled;
 }
 
 function getIndicatorWindowsVisibility() {

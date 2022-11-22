@@ -171,7 +171,7 @@ function createCandlestickChart(
 
                 //TODO TO BE REVIEWED
                 // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
-                if (getOverlappingIndicatorsVisibility()) {
+                if (getOverlappingIndicatorsVisibility() && getOverlappingTitlesVisibility()) {
                     let local_tooltip = gContainer.select('.tooltip')
                     let external_tooltip = d3.select('.tooltip');
                     external_tooltip
@@ -511,6 +511,7 @@ function genericIndicatorChart(functions_json,
             highlight_rect_in_current_chart(gContainer, true);
 
             // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
+            if (getOverlappingTitlesVisibility()) {
             let local_tooltip = gContainer.select('.tooltip')
             let external_tooltip = d3.select('.tooltip');
             external_tooltip
@@ -518,6 +519,7 @@ function genericIndicatorChart(functions_json,
                 .style("top", (event.y - 32) + "px")
                 .style("opacity", .9)
                 .html(local_tooltip.html());
+            }
 
             // HIGHLIGHT THE WINDOWS ON THE CANDLESTICK CHART
             highlight_windows_on_candlestick_chart(gContainer, true);
