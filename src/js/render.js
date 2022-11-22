@@ -162,7 +162,7 @@ function createCandlestickChart(
                 let gContainer = d3.select(event.target.parentNode);
 
                 // HIGHLIGHT THE RECTANGLE CONTAINING THE MOUSE POINTER
-                highlight_rect_in_current_chart(gContainer, true);
+                hightlight_related_rects_in_all_charts(gContainer.attr('class'), true);
 
                 // UPDATE THE CANDLESTICK PATTERN TEXT FROM '*' TO ITS NAME
                 let a = gContainer.selectAll('text');
@@ -206,7 +206,7 @@ function createCandlestickChart(
                 d3.select('.tooltip').style("opacity", 0);
 
                 // highlight the rectangle in the current chart
-                highlight_rect_in_current_chart(gContainer, false);
+                hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
 
                 let a = gContainer.selectAll('text');
                 if (a.text() !== "") a.text('*');
@@ -508,7 +508,7 @@ function genericIndicatorChart(functions_json,
             let gContainer = d3.select(event.target.parentNode);
 
             // HIGHLIGHT THE RECTANGLE CONTAINING THE MOUSE POINTER
-            highlight_rect_in_current_chart(gContainer, true);
+            hightlight_related_rects_in_all_charts(gContainer.attr('class'), true);
 
             // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
             if (getOverlappingTitlesVisibility()) {
@@ -526,7 +526,7 @@ function genericIndicatorChart(functions_json,
         })
         .on("mouseout", event => {
             let gContainer = d3.select(event.target.parentNode);
-            highlight_rect_in_current_chart(gContainer, false);
+            hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
 
             // Hide the tooltip
             d3.select('.tooltip').style("opacity", 0);
@@ -773,6 +773,14 @@ function highlight_rect_in_current_chart(container, isHighlighted) {
     container
         .select('.' + candlesRectClass)
         .attr("fill", isHighlighted ? rectHighlightedColor : "transparent");
+}
+
+function hightlight_related_rects_in_all_charts(classRects, isHighlighted) {
+    d3.selectAll('.' + classRects)
+        .each(function (d, i) {
+            let single_rect = d3.select(this);
+            highlight_rect_in_current_chart(single_rect, isHighlighted);
+        });
 }
 
 function highlight_windows_on_candlestick_chart(container, turn_on) {
