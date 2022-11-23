@@ -8,6 +8,12 @@ const chartsClass = "candles-class";
 const rectHighlightedColor = "#add8e6";
 const _TEMP_SWITCH_WINDOW_MODE = false; //TODO delete this
 
+var Yo;
+var Yc;
+var Yh;
+var Yl;
+var Yv;
+
 function mainRender(
     data,
     {
@@ -38,11 +44,11 @@ function mainRender(
     let xDomain = data.map(date);
     const xRange = [marginLeft, chartWidth - marginRight]; // [left, right]
 
-    const Yo = data.map(open);
-    const Yc = data.map(close);
-    const Yh = data.map(high);
-    const Yl = data.map(low);
-    const Yv = data.map(volume);
+    Yo = data.map(open);
+    Yc = data.map(close);
+    Yh = data.map(high);
+    Yl = data.map(low);
+    Yv = data.map(volume);
 
     const xDomainAsRange = d3.range(Yl.length); // add a candle for the next day
 
@@ -52,12 +58,8 @@ function mainRender(
     // Get xAxis
     const [xScale, xAxis] = getAxisX(timeframe, xDomain, xRange, xPadding);
     xDomain = xScale.domain();
+
     createCandlestickChart(
-        Yo,
-        Yc,
-        Yl,
-        Yh,
-        Yv,
         timeframe,
         dCandlePattern,
         dCandlePatternType,
@@ -73,7 +75,7 @@ function mainRender(
     prevHigh = currHigh;
     currHigh = prevLow * 0.6;
     currLow = prevLow * 0.8;
-    marginBottom= 0;
+    marginBottom = 0;
 
 
     createVolatilityChart(
@@ -89,7 +91,7 @@ function mainRender(
     prevHigh = currHigh;
     currHigh = prevLow * 1;
     currLow = prevLow * 1.2;
-    marginBottom= 0;
+    marginBottom = 0;
 
     createStrengthChart(
         getStrengthIndicatorsJSON(),
@@ -105,7 +107,7 @@ function mainRender(
     prevHigh = currHigh;
     currHigh = prevLow * 1;
     currLow = prevLow * 1.2;
-    marginBottom= 0;
+    marginBottom = 0;
 
     createVolumeChart(
         getVolumeIndicatorsJSON(),
@@ -123,11 +125,6 @@ function mainRender(
 
 ///////////////// main part /////////////////
 function createCandlestickChart(
-    Yo,
-    Yc,
-    Yl,
-    Yh,
-    Yv,
     timeframe,
     dCandlePattern,
     dCandlePatternType,
@@ -171,39 +168,20 @@ function createCandlestickChart(
 
                 //TODO TO BE REVIEWED
                 // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
-                if (getOverlappingIndicatorsVisibility() && getOverlappingTitlesVisibility()) {
-                    let local_tooltip = gContainer.select('.tooltip')
-                    let external_tooltip = d3.select('.tooltip');
-                    external_tooltip
-                        .style("left", (event.x) + "px")
-                        .style("top", (event.y - 32) + "px")
-                        .style("opacity", .9)
-                        .html(local_tooltip.html());
+                if (getOverlappingIndicatorsVisibility()) {
+                    setFunctionTooltipVisibility(gContainer, true);
                 }
 
                 // UPDATE THE LEGEND CONTAINING THE OPEN, CLOSE, HIGH, LOW, DATE AND VOLUME LABEL
                 //TODO TO BE REVIEWED
-                const formatDate = d3.utcFormat("%e-%b-%Y  %H:%M");
-                const formatValue = d3.format(".2f");
-                const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
-                const date_string = gContainer.attr('date');
-                const open_string = gContainer.attr('open');
-                const close_string = gContainer.attr('close');
-                const low_string = gContainer.attr('low');
-                const high_string = gContainer.attr('high');
-                const volume_string = gContainer.attr('volume');
-                d3.select('#label_date').text(formatDate(new Date(date_string)));
-                d3.select('#label_open').text("Open:" + formatValue(open_string));
-                d3.select('#label_close').text("Close:" + formatValue(close_string) + ' (' + formatChange(open_string, close_string) + ')');
-                d3.select('#label_high').text("High:" + formatValue(high_string));
-                d3.select('#label_low').text("Low:" + formatValue(low_string));
-                d3.select('#label_volume').text("Volume:" + formatValue(volume_string));
+                const i = +gContainer.attr('class').split('-')[1];
+                updateLegend(gContainer, xDomain[i], Yo[i], Yc[i], Yl[i], Yh[i], Yv[i]);
             })
             .on("mouseout", event => {
                 let gContainer = d3.select(event.target.parentNode);
 
                 // Hide the tooltip
-                d3.select('.tooltip').style("opacity", 0);
+                setFunctionTooltipVisibility(gContainer, false);
 
                 // highlight the rectangle in the current chart
                 hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
@@ -220,12 +198,12 @@ function createCandlestickChart(
             .attr('class', i => `data-${i}`)
             .attr('id', 'candlestick-container')
             .attr("transform", i => `translate(${xScale(xDomain[i])},${0})`)
-            .attr('open', (d, i) => Yo[i])
-            .attr('close', (d, i) => Yc[i])
-            .attr('high', (d, i) => Yh[i])
-            .attr('low', (d, i) => Yl[i])
-            .attr('date', (d, i) => xDomain[i])
-            .attr('volume', (d, i) => Yv[i])
+            // .attr('open', (d, i) => Yo[i])
+            // .attr('close', (d, i) => Yc[i])
+            // .attr('high', (d, i) => Yh[i])
+            // .attr('low', (d, i) => Yl[i])
+            // .attr('date', (d, i) => xDomain[i])
+            // .attr('volume', (d, i) => Yv[i])
         ;
 
         // Create a rect as high as the container
@@ -296,12 +274,12 @@ function createCandlestickChart(
             .style("fill", i => colors[1 + Math.sign(Yo[i] - Yc[i])])
             .style("stroke", "black")
             .attr("x", -xScale.bandwidth() / 2)
-            .attr("y", i => yScale(Math.max(Yc[i],Yo[i])) )
+            .attr("y", i => yScale(Math.max(Yc[i], Yo[i])))
             .attr("width", xScale.bandwidth())
             .attr("height", i => {
-                const y= yScale(Math.min(Yc[i],Yo[i])) - yScale(Math.max(Yc[i],Yo[i]));
-                return y=== 0 ? 0.1 : y;
-            }) ;
+                const y = yScale(Math.min(Yc[i], Yo[i])) - yScale(Math.max(Yc[i], Yo[i]));
+                return y === 0 ? 0.1 : y;
+            });
 
         // Candlestick pattern text
         gElementsList.append('text')
@@ -511,25 +489,22 @@ function genericIndicatorChart(functions_json,
             hightlight_related_rects_in_all_charts(gContainer.attr('class'), true);
 
             // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
-            if (getOverlappingTitlesVisibility()) {
-            let local_tooltip = gContainer.select('.tooltip')
-            let external_tooltip = d3.select('.tooltip');
-            external_tooltip
-                .style("left", (event.x) + "px")
-                .style("top", (event.y - 32) + "px")
-                .style("opacity", .9)
-                .html(local_tooltip.html());
-            }
+            setFunctionTooltipVisibility(gContainer, true);
 
             // HIGHLIGHT THE WINDOWS ON THE CANDLESTICK CHART
             highlight_windows_on_candlestick_chart(gContainer, true);
+
+            // UPDATE THE LEGEND CONTAINING THE OPEN, CLOSE, HIGH, LOW, DATE AND VOLUME LABEL
+            //TODO TO BE REVIEWED
+            const i = +gContainer.attr('class').split('-')[1];
+            updateLegend(gContainer, xDomain[i], Yo[i], Yc[i], Yl[i], Yh[i], Yv[i]);
         })
         .on("mouseout", event => {
             let gContainer = d3.select(event.target.parentNode);
             hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
 
             // Hide the tooltip
-            d3.select('.tooltip').style("opacity", 0);
+            setFunctionTooltipVisibility(gContainer, false);
 
             // de-HIGHLIGHT THE WINDOWS
             highlight_windows_on_candlestick_chart(gContainer, false);
@@ -808,9 +783,9 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
             // Highlight the rects from i-window_size to i-1
             if (_TEMP_SWITCH_WINDOW_MODE) {
                 if (window_size)
-                    min_idx = Math.max(0, idx - window_size+1)
+                    min_idx = Math.max(0, idx - window_size + 1)
                 else
-                    min_idx = Math.max(0, idx - large_window_size+1)
+                    min_idx = Math.max(0, idx - large_window_size + 1)
                 d3.range(min_idx, idx).map(j =>
                     d3.select(`g#candlestick-container.data-${j} rect`)
                         .attr("fill", color)
@@ -824,18 +799,18 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
                     let lastG = d3.select(`g#candlestick-container.data-${idx}`)
 
                     if (window_size) {
-                        min_idx = Math.max(0, idx - window_size+1)
+                        min_idx = Math.max(0, idx - window_size + 1)
                         let firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
-                        f(dataContainer, firstG, lastG, window_size, color);
+                        createRectFromG1ToG2(dataContainer, firstG, lastG, window_size, color);
 
                     } else {
-                        min_idx = Math.max(0, idx - large_window_size+1)
+                        min_idx = Math.max(0, idx - large_window_size + 1)
                         firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
-                        f(dataContainer, firstG, lastG, window_size, color);
+                        createRectFromG1ToG2(dataContainer, firstG, lastG, window_size, color);
 
-                        min_idx = Math.max(0, idx - small_window_size+1)
+                        min_idx = Math.max(0, idx - small_window_size + 1)
                         firstG = d3.select(`g#candlestick-container.data-${min_idx}`)
-                        f(dataContainer, firstG, lastG, window_size, color);
+                        createRectFromG1ToG2(dataContainer, firstG, lastG, window_size, color);
                     }
                 }
             }
@@ -843,7 +818,7 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
     )
 }
 
-function f(dataContainer, firstG, lastG, window_size, color) {
+function createRectFromG1ToG2(dataContainer, firstG, lastG, window_size, color) {
     let firstRect = firstG.select("rect")
     let lastRect = lastG.select("rect")
 
@@ -867,4 +842,46 @@ function f(dataContainer, firstG, lastG, window_size, color) {
         .attr('y', firstRect.attr('y'))
         .attr('width', lastX - firstX)
         .attr('height', firstRect.attr('height'))
+}
+
+function setFunctionTooltipVisibility(container, isVisible) {
+    if (getOverlappingTitlesVisibility()) {
+        if (isVisible) {
+            let local_tooltip = container.select('.tooltip')
+            let external_tooltip = d3.select('.tooltip');
+            external_tooltip
+                .style("left", (event.x) + "px")
+                .style("top", (event.y - 32) + "px")
+                .style("opacity", .9)
+                .html(local_tooltip.html());
+        } else {
+            d3.select('.tooltip').style("opacity", 0);
+        }
+    }
+}
+
+function updateLegend(container, date_string, open_string, close_string, low_string, high_string, volume_string) {
+    const formatDate = d3.utcFormat("%e-%b-%Y  %H:%M");
+    const formatValue = d3.format(".2f");
+    const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
+    // const date_string = gContainer.attr('date');
+    // const open_string = gContainer.attr('open');
+    // const close_string = gContainer.attr('close');
+    // const low_string = gContainer.attr('low');
+    // const high_string = gContainer.attr('high');
+    // const volume_string = gContainer.attr('volume');
+
+    // const i = +container.attr('class').split('-')[1];
+    // const date_string = xDomain[i];
+    // const open_string = Yo[i];
+    // const close_string = Yc[i];
+    // const low_string = Yl[i];
+    // const high_string = Yh[i];
+    // const volume_string = Yv[i];
+    d3.select('#label_date').text(formatDate(new Date(date_string)));
+    d3.select('#label_open').text("Open:" + formatValue(open_string));
+    d3.select('#label_close').text("Close:" + formatValue(close_string) + ' (' + formatChange(open_string, close_string) + ')');
+    d3.select('#label_high').text("High:" + formatValue(high_string));
+    d3.select('#label_low').text("Low:" + formatValue(low_string));
+    d3.select('#label_volume').text("Volume:" + formatValue(volume_string));
 }
