@@ -20,7 +20,6 @@ var _volatility_indicators_json = {}
 var _strength_indicators_json = {}
 var _volume_indicators_json = {}
 
-//TODO Add a label to each indicator paths
 
 window.onload = function () {
     mainMenu_SetStaticElements();
@@ -28,13 +27,9 @@ window.onload = function () {
 }
 
 function mainSVG() {
-    {
-        width = window.innerWidth,
-            height = window.screen.height,
-            marginLeft = 80,
-            marginTop = 40,
-            marginBottom = 15
-    }
+    const width = window.innerWidth;
+    const height = window.screen.height;
+
     console.log("height: " + height)
     const svg = d3.select("svg")
         .attr("width", width)
@@ -454,8 +449,7 @@ function ATR(data, windows_size = 14) {
 function NATR(data, windows_size = 14) {
     const atr = ATR(data, windows_size);
 
-    let natr = atr.map((v, i) => v / +data[i].Close * 100)
-    return natr;
+    return atr.map((v, i) => v / +data[i].Close * 100);
 
 }
 
@@ -519,9 +513,7 @@ function ADOSC(data, small_window = 4, large_window = 7) {
     const EMA_AD_small = EMA_close(ad, small_window);
     const EMA_AD_large = EMA_close(ad, large_window);
 
-    const Chaikin = EMA_AD_small.map((v, i) => i >= large_window ? v - EMA_AD_large[i] : 0);
-
-    return Chaikin;
+    return EMA_AD_small.map((v, i) => i >= large_window ? v - EMA_AD_large[i] : 0);
 }
 
 //////////////////////////

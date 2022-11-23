@@ -134,17 +134,18 @@ function setIndicatorWindowsVisibilityHTML(isChecked) {
 
 function changeInputFieldBasedOnFunctionHTML(value, window, small_window, large_window) {
     if (value === "ADOSC") {
-        window.style.display= "none";
+        window.style.display = "none";
         small_window.style.display = "inline";
         large_window.style.display = "inline";
     } else {
         window.style.display = "inline";
         small_window.style.display = "none";
-        large_window.style.display= "none";
+        large_window.style.display = "none";
     }
     console.log(value, window, small_window, large_window)
 }
-function addIndicatorFunctionHTML(funName, funWindowsSize=undefined, funSmallWindow=undefined, funLargeWindow=undefined) {
+
+function addIndicatorFunctionHTML(funName, funWindowsSize = undefined, funSmallWindow = undefined, funLargeWindow = undefined) {
     if (!(funWindowsSize || (funSmallWindow && funLargeWindow))) {
         alert("Please enter a valid number for the window size")
         return;

@@ -37,9 +37,9 @@ function mainRender(
         colors = ["#4daf4a", "#999999", "#e41a1c"] // [up, no change, down]
     } = {}) {
     let prevLow;
-    let prevHigh;
+    // let prevHigh;
     let currLow = height;
-    let currHigh = 0;
+    let currHigh;
 
     let xDomain = data.map(date);
     const xRange = [marginLeft, chartWidth - marginRight]; // [left, right]
@@ -57,7 +57,7 @@ function mainRender(
 
     // Get xAxis
     const [xScale, xAxis] = getAxisX(timeframe, xDomain, xRange, xPadding);
-    xDomain = xScale.domain();
+    // xDomain = xScale.domain();
 
     createCandlestickChart(
         timeframe,
@@ -72,7 +72,7 @@ function mainRender(
 
     ////// Create a second graph below the first one: ATR //////
     prevLow = currLow;
-    prevHigh = currHigh;
+    // prevHigh = currHigh;
     currHigh = prevLow * 0.6;
     currLow = prevLow * 0.8;
     marginBottom = 0;
@@ -88,8 +88,8 @@ function mainRender(
 
     ////// Create third diagram: RSI //////
     prevLow = currLow;
-    prevHigh = currHigh;
-    currHigh = prevLow * 1;
+    // prevHigh = currHigh;
+    currHigh = prevLow; // *1
     currLow = prevLow * 1.2;
     marginBottom = 0;
 
@@ -104,8 +104,8 @@ function mainRender(
 
     // ////// Create 4° diagram: volume //////
     prevLow = currLow;
-    prevHigh = currHigh;
-    currHigh = prevLow * 1;
+    // prevHigh = currHigh;
+    currHigh = prevLow; // *1
     currLow = prevLow * 1.2;
     marginBottom = 0;
 
@@ -144,7 +144,7 @@ function createCandlestickChart(
 
     const yAxisLabel = '↑ Price ($)'; // a label for the y-axis
     let yDomain = [d3.min(Yl), d3.max(Yh)];
-    const yRange = [chartHeight - marginTop, marginTop]; // [bottom, top]
+    const yRange = [chartHeight - marginBottom, marginTop]; // [bottom, top] //old  const yRange = [chartHeight - marginTop, marginTop]
 
     // Get yAxis
     const [yScale, yAxis] = getAxisY(yDomain, yRange, chartHeight / 40);
@@ -159,21 +159,19 @@ function createCandlestickChart(
                 let gContainer = d3.select(event.target.parentNode);
 
                 // HIGHLIGHT THE RECTANGLE CONTAINING THE MOUSE POINTER
-                hightlight_related_rects_in_all_charts(gContainer.attr('class'), true);
+                highlight_related_rects_in_all_charts(gContainer.attr('class'), true);
 
                 // UPDATE THE CANDLESTICK PATTERN TEXT FROM '*' TO ITS NAME
                 let a = gContainer.selectAll('text');
                 if (a.text() !== "") a.text(i => dCandlePattern[i]);
 
 
-                //TODO TO BE REVIEWED
                 // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
                 if (getOverlappingIndicatorsVisibility()) {
                     setFunctionTooltipVisibility(gContainer, true);
                 }
 
                 // UPDATE THE LEGEND CONTAINING THE OPEN, CLOSE, HIGH, LOW, DATE AND VOLUME LABEL
-                //TODO TO BE REVIEWED
                 const i = +gContainer.attr('class').split('-')[1];
                 updateLegend(gContainer, xDomain[i], Yo[i], Yc[i], Yl[i], Yh[i], Yv[i]);
             })
@@ -184,7 +182,7 @@ function createCandlestickChart(
                 setFunctionTooltipVisibility(gContainer, false);
 
                 // highlight the rectangle in the current chart
-                hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
+                highlight_related_rects_in_all_charts(gContainer.attr('class'), false);
 
                 let a = gContainer.selectAll('text');
                 if (a.text() !== "") a.text('*');
@@ -198,12 +196,6 @@ function createCandlestickChart(
             .attr('class', i => `data-${i}`)
             .attr('id', 'candlestick-container')
             .attr("transform", i => `translate(${xScale(xDomain[i])},${0})`)
-            // .attr('open', (d, i) => Yo[i])
-            // .attr('close', (d, i) => Yc[i])
-            // .attr('high', (d, i) => Yh[i])
-            // .attr('low', (d, i) => Yl[i])
-            // .attr('date', (d, i) => xDomain[i])
-            // .attr('volume', (d, i) => Yv[i])
         ;
 
         // Create a rect as high as the container
@@ -211,20 +203,6 @@ function createCandlestickChart(
 
         // Add 2nd style: linechart close
         let data2 = xDomainAsRange.map(i => [xScale(xDomain[i]), yScale(Yc[i])])
-        // container
-        //     .selectAll(null)
-        //     .data(d3.pairs(data2))
-        //     .enter()
-        //     .append("line")
-        //     //d[i][j] i=0,1 j=0,1. i=candle, j=x,y
-        //     .attr("x1", d => d[0][0])
-        //     .attr("x2", d => d[1][0])
-        //     .attr("y1", d => d[0][1])
-        //     .attr("y2", d => d[1][1])
-        //     .style("stroke-width", "2px")
-        //     .style("stroke", d =>{
-        //         return colors[1 + Math.sign(d[1][1] - d[0][1])]
-        //     })
 
         // thick
         gElementsList.append("line")
@@ -246,7 +224,7 @@ function createCandlestickChart(
             .attr("y1", d => d[0][1])
             .attr("y2", d => d[1][1])
             .style("stroke-width", "2px")
-            .style("stroke", (d, i) => {
+            .style("stroke", (d) => {
                 return colors[1 + Math.sign(d[1][1] - d[0][1])]
             });
 
@@ -257,15 +235,6 @@ function createCandlestickChart(
                 return yScale(Yl[i])
             })
             .attr("y2", i => yScale(Yh[i]));
-
-        // Real body of the candle
-        // line real body
-        // gElementsList.append("line")
-        //     .attr("class", "style_candlestick")
-        //     .attr("y1", i => yScale(Yo[i]))
-        //     .attr("y2", i => yScale(Yc[i]))
-        //     .attr("stroke-width", xScale.bandwidth())
-        //     .attr("stroke", i => colors[1 + Math.sign(Yo[i] - Yc[i])]);
 
         // rect real body
         gElementsList.append("rect")
@@ -307,25 +276,6 @@ function createCandlestickChart(
             });
 
         // Compute titles and append it.
-        // Create the title popup
-//         function getTitleText(date, opens, closes, highs, lows) {
-//             const formatDate = d3.utcFormat("%e-%b-%Y  %H:%M");
-//             const formatValue = d3.format(".2f");
-//             const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
-//
-//             const title = i => `${formatDate(date[i])}
-// Open: ${formatValue(opens[i])}
-// Close: ${formatValue(closes[i])} (${formatChange(opens[i], closes[i])})
-// Low: ${formatValue(lows[i])}
-// High: ${formatValue(highs[i])}`;
-//
-//             return title;
-//         }
-        // const title = getTitleText(xDomain, Yo, Yc, Yh, Yl);
-        // gElementsList.append("title")
-        //     .text(title);
-
-        // Compute titles and append it.
         addIndicatorTitle(gElementsList, getOverlappingIndicatorsJSON());
     }
 
@@ -341,8 +291,6 @@ function createCandlestickChart(
     /////
 
     // CALL THE FUNCTIONS
-    //TODO temp
-    // add_XAxis_Group(container, xAxis, chartHeight - marginBottom);
     add_XAxis_Group(container, xAxis, 0);
 
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
@@ -355,8 +303,8 @@ function createCandlestickChart(
                 .attr('visibility', 'visible');
             container.selectAll(".style_linechart")
                 .attr('visibility', 'hidden');
-            // container.
             break;
+
         case "linechart":
             container.selectAll(".style_candlestick")
                 .attr('visibility', 'hidden');
@@ -468,8 +416,6 @@ function genericIndicatorChart(functions_json,
     // Get yAxis
     const [yScale, yAxis] = getAxisY(yDomain, yRange, nTicks, ticks);
 
-    // TODO temp
-    // add_XAxis_Group(container, xAxis, yLow - marginBottom);
     add_YAxis_Group(container, yAxis, marginLeft, chartWidth - marginLeft - marginRight, yAxisLabel);
 
 
@@ -486,7 +432,7 @@ function genericIndicatorChart(functions_json,
             let gContainer = d3.select(event.target.parentNode);
 
             // HIGHLIGHT THE RECTANGLE CONTAINING THE MOUSE POINTER
-            hightlight_related_rects_in_all_charts(gContainer.attr('class'), true);
+            highlight_related_rects_in_all_charts(gContainer.attr('class'), true);
 
             // DISPLAY THE EXTERNAL TOOLTIP AND UPDATE ITS HTML WITH THE ONE SAVED INTO THE LOCAL
             setFunctionTooltipVisibility(gContainer, true);
@@ -501,7 +447,7 @@ function genericIndicatorChart(functions_json,
         })
         .on("mouseout", event => {
             let gContainer = d3.select(event.target.parentNode);
-            hightlight_related_rects_in_all_charts(gContainer.attr('class'), false);
+            highlight_related_rects_in_all_charts(gContainer.attr('class'), false);
 
             // Hide the tooltip
             setFunctionTooltipVisibility(gContainer, false);
@@ -580,7 +526,6 @@ function addIndicatorTitle(gList, functions_json) {
     if (Object.keys(functions_json['functions']).length === 0)
         return;
 
-    // const formatDate = d3.utcFormat("%B %-d, %Y");
     const formatValue = d3.format(".2f");
     const formatChange = (f => (y0, y1) => {
         return f((y1 - y0) / y0)
@@ -591,12 +536,9 @@ function addIndicatorTitle(gList, functions_json) {
         let title_html = "";
         let tooltip = d3.create('div');
         tooltip.attr('class', 'tooltip');
-        // tooltip
-        //     .attr('class', 'tooltip')
-        //     .attr('visibility', 'hidden')
-        // ;
+
         let j = 0;
-        for (const [id, value] of Object.entries(functions_json['functions'])) {
+        for (const [_id, value] of Object.entries(functions_json['functions'])) {
             const name = value['name'];
             const new_data = value['data'];
             const color = value['color'];
@@ -675,7 +617,7 @@ function getAxisX(timeframe, xDomain, xRange, xPadding) {
             xFormat = "%M"; // month
             tickFun = d3.utcMonth;
             oneEleOffset = 1
-            tickStep = oneEleOffset * 1;
+            tickStep = oneEleOffset; // *1
             break;
     }
     xDomain.push(tickFun.offset(lastEle, oneEleOffset))
@@ -750,9 +692,9 @@ function highlight_rect_in_current_chart(container, isHighlighted) {
         .attr("fill", isHighlighted ? rectHighlightedColor : "transparent");
 }
 
-function hightlight_related_rects_in_all_charts(classRects, isHighlighted) {
+function highlight_related_rects_in_all_charts(classRects, isHighlighted) {
     d3.selectAll('.' + classRects)
-        .each(function (d, i) {
+        .each(function () {
             let single_rect = d3.select(this);
             highlight_rect_in_current_chart(single_rect, isHighlighted);
         });
@@ -769,7 +711,7 @@ function highlight_windows_on_candlestick_chart(container, turn_on) {
     // For each path
     container.select(function () {
         return this.parentNode.parentNode;
-    }).selectAll("path").each(function (d, i) {
+    }).selectAll("path").each(function () {
             // Get its window_size and color
             let window_size = d3.select(this).attr("window_size")
             let large_window_size = d3.select(this).attr("large_window_size")
@@ -864,20 +806,7 @@ function updateLegend(container, date_string, open_string, close_string, low_str
     const formatDate = d3.utcFormat("%e-%b-%Y  %H:%M");
     const formatValue = d3.format(".2f");
     const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
-    // const date_string = gContainer.attr('date');
-    // const open_string = gContainer.attr('open');
-    // const close_string = gContainer.attr('close');
-    // const low_string = gContainer.attr('low');
-    // const high_string = gContainer.attr('high');
-    // const volume_string = gContainer.attr('volume');
 
-    // const i = +container.attr('class').split('-')[1];
-    // const date_string = xDomain[i];
-    // const open_string = Yo[i];
-    // const close_string = Yc[i];
-    // const low_string = Yl[i];
-    // const high_string = Yh[i];
-    // const volume_string = Yv[i];
     d3.select('#label_date').text(formatDate(new Date(date_string)));
     d3.select('#label_open').text("Open:" + formatValue(open_string));
     d3.select('#label_close').text("Close:" + formatValue(close_string) + ' (' + formatChange(open_string, close_string) + ')');
