@@ -48,13 +48,13 @@
                 <br>
                 <!-- SELECT N data -->
                 <label for="selectSampleSize">N most recent data</label>
-                <input id="selectSampleSize" min="1" value="1" type="number" onblur="numericInput(this)"
+                <input id="selectSampleSize" min="1" value="1" type="number" onblur="numericInputValidation(this); setDataSampleSizeHTML(this)"
                        title="Rendering might lag if too many points are selected (>1000)">
                 /<label for="selectSampleSize" id="labelSampleSize">24</label>
                 <br>
             </fieldset>
             <!-- OHCL style-->
-            <br><br>
+            <br>
             <fieldset onchange="setOHCLChartStyleHTML(event)">
                 <legend>OHCL style</legend>
                 <!-- Radiobutton style -->
@@ -85,35 +85,51 @@
                 <input id="enableOverlappingIndicators" type="checkbox"
                        onchange="setOverlappingIndicatorsVisibilityHTML(this.checked)"/>
 
-                <!--                TODO -->
                 <!--CHECKBOX TO TOGGLE THE OVERLAPPING INDICATORS VISIBILITY -->
                 <br>
                 <label>Indicator tooltips</label>
                 <input id="enableOverlappingTitles" type="checkbox"
                        onchange="setOverlappingTitlesVisibilityHTML(this.checked)"/>
-                <!--END TODO-->
                 <!--CHECKBOX TO TOGGLE THE WINDOWS VISIBILITY -->
                 <br>
                 <label>Indicator windows</label>
                 <input id="enableIndicatorWindows" type="checkbox"
                        onchange="setIndicatorWindowsVisibilityHTML(this.checked)"/>
             </fieldset>
-            <!--DROPDOWN TO ADD AN INDICATOR AND ITS WINDOW SIZE-->
+            <!--ACTIONS-->
             <br>
-            <select id="selectFunction"
-                    onchange="changeInputFieldBasedOnFunctionHTML(this.value, document.getElementById('window_input'), document.getElementById('small_window_input'), document.getElementById('large_window_input'))">
-                <option value="NATR">NATR</option>
-                <option value="SMA" selected>SMA</option>
-                <option value="EMA">EMA</option>
-                <option value="RSI">RSI</option>
-                <option value="ADOSC">ADOSC</option>
-            </select>
-            <input type="number" placeholder="14" id="window_input">
-            <input type="number" placeholder="3" id="small_window_input" style="display: none">
-            <input type="number" placeholder="10" id="large_window_input" style="display: none">
-
-            <input type="button" value="Add"
-                   onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('window_input').value, document.getElementById('small_window_input').value, document.getElementById('large_window_input').value)">
+            <fieldset>
+                <legend>Actions</legend>
+                <!--DROPDOWN TO ADD AN INDICATOR -->
+                <div>
+                    <select id="selectFunction"
+                            onchange="changeInputFieldBasedOnFunctionHTML(this.value, document.getElementById('window_input'), document.getElementById('small_window_input'), document.getElementById('large_window_input'))">
+                        <option value="NATR">NATR</option>
+                        <option value="SMA" selected>SMA</option>
+                        <option value="EMA">EMA</option>
+                        <option value="RSI">RSI</option>
+                        <option value="ADOSC">ADOSC</option>
+                    </select>
+                    <!--  WINDOW SIZE NUMBER INPUT -->
+                    <input type="number" placeholder="14" id="window_input">
+                    <input type="number" placeholder="3" id="small_window_input" style="display: none">
+                    <input type="number" placeholder="10" id="large_window_input" style="display: none">
+                    <!-- ADD FUNCTION BUTTON -->
+                    <input type="button" value="Add"
+                           onclick="addIndicatorFunctionHTML(document.getElementById('selectFunction').value, document.getElementById('window_input').value, document.getElementById('small_window_input').value, document.getElementById('large_window_input').value)">
+                </div>
+                <div>
+                    <!-- Left click on path -->
+                    <img src="images/drag.png" title="Drag the left key mouse = move around" >
+                    <br>
+                    <img src="images/scroll.png" title="Scroll above the graph = zoom in/out" >
+                    <br>
+                    <img src="images/left-click.png" title="Left click on a line = enable/disable points of interest" >
+                    <br>
+                    <img src="images/right-click.png" title="Right click on a line = delete that line" >
+                    <br>
+                </div>
+            </fieldset>
             <br>
         </div>
         <!--        <button class="collapsible">Open Section 2</button>-->

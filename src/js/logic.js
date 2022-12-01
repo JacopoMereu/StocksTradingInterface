@@ -36,6 +36,8 @@ function mainSVG() {
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
         .attr("style", "max-width: 100%; height: auto;")
+        // .on('contextmenu', e => e.preventDefault()) // prevent menu on right click
+
     console.log("height: " + svg.attr('height'));
 
     // read JSON file in data/results/header.json
@@ -54,7 +56,7 @@ function mainSVG() {
     })();
 
     // add the options to the dropdown
-    [default_filename, default_timeframe] = setDropdownOptionsHTML(json_header)
+    [default_filename, default_timeframe] = setDatasetDropdownOptionsHTML(json_header)
 
 
     // load default data
@@ -62,12 +64,22 @@ function mainSVG() {
 }
 
 //// RENDERING ///////////////////////////
-function updateRendering() {
+function updateGraphRendering() {
     render_data(_curr_sliced_data, _curr_timeframe);
 }
 
-function updateData() {
-    load_data(_curr_filename, _curr_timeframe, true);
+/**
+ * This method is called if the user changes the number of data points to be displayed
+ */
+function updateNDataRendered() {
+    _curr_sliced_data = _curr_data.slice(-getDataSampleSize());
+
+    // UPDATE INDICATORS ACCORDING TO THE NEW SLICED DATA
+    updateIndicators();
+
+    // update rendering
+    updateGraphRendering();
+    mainMenu_UpdateDynamicElements()
 }
 
 const render_data = (data, timeframe) => {
@@ -113,38 +125,32 @@ const render_data = (data, timeframe) => {
 
 };
 
-function load_data(filename, timeframe, updateFlag = false) {
+function load_data(filename, timeframe) {
 
     let folder = "data/results/";
     let ext = '.csv';
     const full_path = folder + filename + '/' + timeframe + ext
 
-    if (updateFlag) {
+    resetIndicators();
 
-        mainMenu_UpdateDynamicElements(_curr_data)
-        _curr_sliced_data = _curr_data.slice(-getDataSampleSize());
+    d3.csv(full_path)
+        .then(data => {
+            // filter and update the loaded data
+            data = data.filter(d => d.Close !== "" || d.Open !== "" || d.High !== "" || d.Low !== "");
+            _curr_data = data;
+            _curr_sliced_data = data.slice(-getDataSampleSize());
+            _curr_filename = filename;
+            _curr_timeframe = timeframe;
 
-        updateIndicators();
+            // ADD DEFAULT INDICATORS FOR PRACTICALITY
+            addDefaultIndicators();
 
-        updateRendering();
-    } else {
-        resetIndicators();
+            // update rendering
+            updateGraphRendering();
+            mainMenu_UpdateDynamicElements()
 
-        d3.csv(full_path)
-            .then(data => {
-                data = data.filter(d => d.Close !== "" || d.Open !== "" || d.High !== "" || d.Low !== "");
-                _curr_data = data;
-                mainMenu_UpdateDynamicElements(_curr_data)
-                _curr_sliced_data = data.slice(-getDataSampleSize());
-                _curr_filename = filename;
-                _curr_timeframe = timeframe;
+        });
 
-                // ADD DEFAULT INDICATORS FOR PRACTICALITY
-                addDefaultIndicators();
-
-                render_data(_curr_sliced_data, _curr_timeframe);
-            });
-    }
 
 }
 
@@ -205,13 +211,22 @@ function updateIndicators() {
 
 function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindowSize = undefined, funLargeWindowSize = undefined) {
 
+    // Generate the indicator function/data
     const funData = isNaN(funWindowSize)
         ? eval(`${funName}(${JSON.stringify(_curr_sliced_data)}, ${funSmallWindowSize}, ${funLargeWindowSize})`)
         : eval(`${funName}(${JSON.stringify(_curr_sliced_data)}, ${funWindowSize})`);
-    const funColor = getRandomColor();
-    const indicator_json = getIndicatorsJSON(funName);
-    const localMax = d3.max(funData);
 
+    //TODO ADD A WAY TO FIND THE INDICES OF SPECIAL POINTS (RSI > 70, etc)
+    const specialPointsIndexes = [1, 10, 20,30,40,50,60]
+    // Get the points value from the indeces
+    const specialPoints = specialPointsIndexes.map(i => [i,funData[i]])
+    //TODO END
+
+    const funColor = getRandomColor(); // Generate a random color for the indicator
+    const indicator_json = getIndicatorsJSON(funName); // Get the correct list of indicators to which the new indicator will be added
+
+    const localMax = d3.max(funData); // Local maximum
+    // Add the indicator to the list of indicators
     indicator_json['functions'][Object.keys(indicator_json['functions']).length] = {
         ...(!isNaN(funWindowSize)) && {"window_size": funWindowSize},
         ...(!isNaN(funSmallWindowSize)) && {"small_window_size": funSmallWindowSize},
@@ -221,7 +236,10 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
         "window_size": funWindowSize,
         "data": funData,
         "max": localMax,
+        "special_points": specialPointsIndexes //TODO ADDED THIS
     }
+
+    // Evaluate global maximum and minimum
     if (indicator_json["global_max"] < localMax)
         indicator_json["global_max"] = localMax;
     if ("global_min" in indicator_json) {
@@ -231,12 +249,20 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
         }
 
     }
-    // Sort
+
+    // Sort according to the window size descending
     indicator_json['functions'] = indicator_json['functions'].sort(function (x, y) {
         return d3.descending(x['window_size'], y['window_size']);
     })
 }
+function removeIndicatorFunctionByD3Select(id) {
+    const idSplit = id.split('-')
+    const funName = idSplit[0]
+    const idInsideList = idSplit[1]
+    getIndicatorsJSON(funName)['functions'].splice(idInsideList)
 
+    updateGraphRendering()
+}
 function setColors(colors) {
     _curr_colors = colors;
 }

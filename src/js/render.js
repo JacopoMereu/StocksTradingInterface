@@ -482,14 +482,37 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
     const yDomain = yScale.domain();
 
     for (const [id, value] of Object.entries(functions_json['functions'])) {
+        let container2 = container.append('g');
+
         const name = value['name'];
         const new_data = value['data'];
         const color = value['color'];
         const window_size = value['window_size'];
         const small_window_size = value['small_window_size'];
         const large_window_size = value['large_window_size'];
+        const specialPoints = value['special_points'];
 
-        container
+        let isPathClicked = false;
+
+        // const innerCircleRadius = 1;
+        container2.selectAll("circle.line")
+            .data(specialPoints)
+            .enter()
+            .append("svg:circle")
+            // .filter((d,i)=>specialPoints.includes(i))
+            // .attr("class", "glucose")
+            .attr("r", 4)
+            .attr('stroke-width',1)
+            .attr('cx', (indexPoint) => xScale(xDomain[indexPoint]))
+            .attr('cy', indexPoint => {
+                let yValue = new_data[indexPoint];
+                return isNaN(yValue) || yValue === 0 ? yScale(yDomain[0]) : yScale(yValue)
+            })
+            .style('fill', color)
+            .style('stroke', 'black')
+            .style('visibility', 'hidden')
+
+        container2
             .append('path')
             .attr('class', 'indicator-line')
             .attr('id', `${name}-${id}`)
@@ -499,7 +522,7 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
             .attr('small_window_size', () => small_window_size ? small_window_size : null)
             .attr('large_window_size', () => large_window_size ? large_window_size : null)
             .attr("stroke", color)
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2)
             .attr("d", d3.line()
                 .x(
                     (d, i) => xScale(xDomain[i])
@@ -507,6 +530,19 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
                 .y(d => isNaN(d) || d === 0 ? yScale(yDomain[0]) : yScale(d)
                 )
             )
+            .on("click", event => {
+                console.log("left click")
+                isPathClicked = !isPathClicked
+                const circles = d3.select(event.target.parentNode).selectAll('circle');
+                circles.style('visibility' , isPathClicked ? 'visible' : 'hidden')
+            })
+            .on("contextmenu", event => {
+                console.log("right click")
+                const v = d3.select(event.target);
+                const pathId = v.attr('id')
+                removeIndicatorFunctionByD3Select(pathId)
+            });
+
     }
 }
 
@@ -792,8 +828,8 @@ function setFunctionTooltipVisibility(container, isVisible) {
             let local_tooltip = container.select('.tooltip')
             let external_tooltip = d3.select('.tooltip');
             external_tooltip
-                .style("left", (event.x) + "px")
-                .style("top", (event.y - 32) + "px")
+                .style("left", (event.x + 10) + "px")
+                .style("top", (event.y - 10) + "px")
                 .style("opacity", .9)
                 .html(local_tooltip.html());
         } else {

@@ -24,39 +24,96 @@ function mainMenu_SetStaticElements() {
     toggleCollapsibles()
 }
 
-function numericInput(input) {
+function numericInputValidation(input) {
     // Credits: https://stackoverflow.com/questions/41444813/validation-for-input-type-number-with-minimum-and-maximum-range
     if (input.type === "number" && input.max && input.min) {
-        console.log("min", input.min, "max", input.max, "value", input.value)
-        let value = +input.value
-        // input.value = value // for 000 like input cleanup to 0
-        console.log(input.value)
+        const numberField = d3.select(input)
+        const oldValue = numberField.attr('value');
+
+        let newValue = +input.value
+        if (oldValue === newValue) return;
+
         let max = +input.max
         let min = +input.min
-        if (value > max) input.value = input.max
-        if (value < min) input.value = input.min
-        setDataSampleSize(input.value)
-        updateData()
-    }
-}
-
-function mainMenu_UpdateDynamicElements(data) {
-    function updateSampleSize() {
-        const input = document.getElementById(selectSampleSize);
-        const new_max = data.length;
-        const new_value = Math.min(new_max, getDataSampleSize());
-
-        setDataSampleSize(new_value)
-
-        input.max = new_max;
-        input.value = new_value;
-        document.getElementById('labelSampleSize').innerText = new_max
+        if (newValue > max) newValue = max
+        if (newValue < min) newValue = min
+        // numberField.attr('value', newValue)
+        input.value = newValue.toString()
+    } else {
+        alert("Please enter a valid number")
     }
 
-    updateSampleSize()
 }
 
-function setDropdownOptionsHTML(json_header) {
+function setDataSampleSizeHTML(input) {
+    if (+input.value !== getDataSampleSize()) {
+        setDataSampleSize(+input.value)
+        updateNDataRendered()
+    }
+    else {
+        alert("Please enter a different number")
+    }
+}
+function mainMenu_UpdateDynamicElements() {
+    const non_sliced_data = _curr_data;
+
+    function updateSampleSizeAfterDatasetUpdate() {
+        const nData_LabelHTML = document.getElementById('labelSampleSize');
+        const nDataWanted_InputFieldHTML = document.getElementById(selectSampleSize);
+
+        const new_nData = non_sliced_data.length;
+        const old_nDataWanted = getDataSampleSize();
+        const new_nDataWanted = Math.min(new_nData, old_nDataWanted);
+
+        setDataSampleSize(new_nDataWanted)
+
+        nDataWanted_InputFieldHTML.max = new_nData;
+        nDataWanted_InputFieldHTML.value = new_nDataWanted;
+        nData_LabelHTML.innerText = new_nData.toString()
+    }
+
+    // function updateActionOptions() {
+    //     const idDropdownHighlightRSIPoints = 'selectRSIHighlight';
+    //
+    //     // update RSI highlight options with the RSI functions
+    //     console.log(getStrengthIndicatorsJSON())
+    //
+    //     /**/
+    //     function addTextsOptions(dropdown, data) {
+    //         dropdown
+    //             .selectAll('myOptions')
+    //             .data(data)
+    //             .enter()
+    //             .append('option')
+    //             .text(function (d) {
+    //                 return d;
+    //             }) // text showed in the menu
+    //             .attr("value", function (d) {
+    //                 return d;
+    //             }) // corresponding value returned by the button
+    //     }
+    //
+    //     // DATASET
+    //     const datasetNames = Object.keys(json_header)
+    //
+    //     d3.select(idDropdownHighlightRSIPoints)
+    //         // on dropdownHighlightRSIPoints load the new dataset
+    //         .on('change', event => {
+    //             // const new_data_filename = event.target.value;
+    //             // const old_data_timeframe = d3.select(idTimeframeDropdown).property('value');
+    //             // load_data(new_data_filename, old_data_timeframe)
+    //         })
+    //         .call(dropdown => addTextsOptions(dropdown, datasetNames))
+    //     /**/
+    //
+    // }
+
+    ///// Calling all the functions
+    updateSampleSizeAfterDatasetUpdate()
+    // updateActionOptions()
+}
+
+function setDatasetDropdownOptionsHTML(json_header) {
     const idDatasetDropdown = "#selectButton"
     const idTimeframeDropdown = '#selectFrameTime'
 
@@ -109,27 +166,27 @@ function setDropdownOptionsHTML(json_header) {
 ////////////////////// HTML Actions ////////////////////////////////
 function setColorsHTML(colors) {
     setColors(colors)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function setPatternsVisibilityHTML(isChecked) {
     setPatternsVisibility(isChecked)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function setOverlappingIndicatorsVisibilityHTML(isChecked) {
     setOverlappingIndicatorsVisibility(isChecked)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function setOverlappingTitlesVisibilityHTML(isChecked) {
     setOverlappingTitlesVisibility(isChecked)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function setIndicatorWindowsVisibilityHTML(isChecked) {
     setIndicatorWindowsVisibility(isChecked)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function changeInputFieldBasedOnFunctionHTML(value, window, small_window, large_window) {
@@ -151,13 +208,13 @@ function addIndicatorFunctionHTML(funName, funWindowsSize = undefined, funSmallW
         return;
     }
     addIndicatorFunction(funName, funWindowsSize, funSmallWindow, funLargeWindow)
-    updateRendering()
+    updateGraphRendering()
 }
 
 function setOHCLChartStyleHTML(event) {
     let style = event.target.value
     setOHCLChartStyle(style)
-    updateRendering()
+    updateGraphRendering()
 }
 
 ///////////////////////////////////////////////////////////////////
