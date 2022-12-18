@@ -259,7 +259,7 @@ function removeIndicatorFunctionByD3Select(id) {
     const idSplit = id.split('-')
     const funName = idSplit[0]
     const idInsideList = idSplit[1]
-    getIndicatorsJSON(funName)['functions'].splice(idInsideList)
+    getIndicatorsJSON(funName)['functions'].splice(idInsideList, 1)
 
     updateGraphRendering()
 }
