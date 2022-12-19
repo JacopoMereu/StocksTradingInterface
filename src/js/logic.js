@@ -36,7 +36,7 @@ function mainSVG() {
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
         .attr("style", "max-width: 100%; height: auto;")
-        // .on('contextmenu', e => e.preventDefault()) // prevent menu on right click
+    // .on('contextmenu', e => e.preventDefault()) // prevent menu on right click
 
     console.log("height: " + svg.attr('height'));
 
@@ -209,6 +209,45 @@ function updateIndicators() {
 
 }
 
+function getSpecialPointIndexes(funName, funData) {
+    let specialPointsIndexes = [];
+
+    switch (funName) {
+        case "RSI":
+            const minThreshold = 30;
+            const maxThreshold = 70;
+            funData.forEach((currentEl, i) => {
+                let previousEl = funData[i - 1]
+                const isTraversingThreshold = TH => ((currentEl >= TH && previousEl < TH) || (currentEl < TH && previousEl >= TH))
+                if (isTraversingThreshold(minThreshold) || isTraversingThreshold(maxThreshold))
+                    specialPointsIndexes.push(i - 1)
+            })
+            break
+        default:
+            // alert("ERROR, THIS CASE SHOULD NOT HAPPEN")
+            // specialPointsIndexes = [1, 10, 20, 30, 40, 50, 60];
+            const kNeighbors = 15;
+            // extract local maxima and minima from funData at distance searchWindow
+            funData.forEach((el, i) => {
+                    if (el === 0) return;
+
+                    let leftK = funData.slice(Math.max(i - kNeighbors, 0), i);
+                    let rightK = funData.slice(i + 1, i + kNeighbors + 1);
+                    const isLocalMaxima = el >= Math.max(...leftK) && el >= Math.max(...rightK)
+                    const isLocalMinima = el <= Math.min(...leftK) && el <= Math.min(...rightK)
+                    if (isLocalMaxima || isLocalMinima) {
+                        specialPointsIndexes.push(i)
+                        // if (funName === "ADOSC" && el<0) {
+                            // console.log(el, i, leftK, rightK)
+                        // }
+                    }
+                }
+            )
+            break
+    }
+    return specialPointsIndexes;
+}
+
 function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindowSize = undefined, funLargeWindowSize = undefined) {
 
     // Generate the indicator function/data
@@ -217,9 +256,9 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
         : eval(`${funName}(${JSON.stringify(_curr_sliced_data)}, ${funWindowSize})`);
 
     //TODO ADD A WAY TO FIND THE INDICES OF SPECIAL POINTS (RSI > 70, etc)
-    const specialPointsIndexes = [1, 10, 20,30,40,50,60]
+    const specialPointsIndexes = getSpecialPointIndexes(funName, funData)
     // Get the points value from the indeces
-    const specialPoints = specialPointsIndexes.map(i => [i,funData[i]])
+    // const specialPoints = specialPointsIndexes.map(i => [i, funData[i]])
     //TODO END
 
     const funColor = getRandomColor(); // Generate a random color for the indicator
@@ -255,6 +294,7 @@ function addIndicatorFunction(funName, funWindowSize = undefined, funSmallWindow
         return d3.descending(x['window_size'], y['window_size']);
     })
 }
+
 function removeIndicatorFunctionByD3Select(id) {
     const idSplit = id.split('-')
     const funName = idSplit[0]
@@ -263,6 +303,7 @@ function removeIndicatorFunctionByD3Select(id) {
 
     updateGraphRendering()
 }
+
 function setColors(colors) {
     _curr_colors = colors;
 }
