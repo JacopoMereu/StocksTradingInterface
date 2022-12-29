@@ -179,6 +179,10 @@ function setOverlappingIndicatorsVisibilityHTML(isChecked) {
     updateGraphRendering()
 }
 
+function setHighlightClosestPathToMouseHTML(isChecked) {
+    setHighlightClosestPathToMouse(isChecked)
+    updateGraphRendering()
+}
 function setOverlappingTitlesVisibilityHTML(isChecked) {
     setOverlappingTitlesVisibility(isChecked)
     updateGraphRendering()

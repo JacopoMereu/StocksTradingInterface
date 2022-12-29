@@ -7,13 +7,7 @@ const candlesRectClass = 'rect-class';
 const chartsClass = "candles-class";
 const rectHighlightedColor = "#add8e6";
 const _TEMP_SWITCH_WINDOW_MODE = false; //TODO delete this
-/*
-TODO #1: The delaunay/voronoi diagram should be constructed once for the rendering (not at mouseclick)
- and the query point should be done at mouseover (or dragstart/stop if the rendering becomes laggy).
- */
-/*
-TODO #2: The closest path to the mouse should be highlighted
- */
+
 var Yo;
 var Yc;
 var Yh;
@@ -487,48 +481,67 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
     const xDomain = xScale.domain();
     const yDomain = yScale.domain();
 
-    // container on mouse enter print "enter", on mouse exit print "exit"
-    container.on("click", function (event) {
-        // const rect_id = event.target.parentNode['__data__'];
-        let vec_x_y_pathId = []
+    // BUILD DELAUNAY/VORONOI
+    let vec_x_y_pathId = []
 
-        //get px and py values from event
-        // let px = event.pageX;
-        // let py = event.pageY;
-        // let xTranslate = d3.select(event.target.parentNode).node().transform.baseVal.getItem(0).matrix.e;
-        // let yTranslate = d3.select(event.target.parentNode).node().transform.baseVal.getItem(0).matrix.f;
-        // console.log(d3.select(event.target.parentNode).node().transform.baseVal.getItem(0).matrix);
-
-        for (const [id, value] of Object.entries(functions_json['functions'])) {
-            // const name = value['name'];
-            const new_data = value['data'];
-            // const color = value['color'];
-            // const window_size = value['window_size'];
-            // const small_window_size = value['small_window_size'];
-            // const large_window_size = value['large_window_size'];
-            // const specialPoints = value['special_points'];
-
-            let tmpVec = new_data.map((v, i) => [[xScale(xDomain[i]), isNaN(v) ? yScale(yDomain[0])+id*5 : yScale(v)], id])
-            vec_x_y_pathId.push(...tmpVec)
-        }
+    for (const [id, value] of Object.entries(functions_json['functions'])) {
+        const new_data = value['data'];
+        let tmpVec = new_data.map((v, i) => [[xScale(xDomain[i]), isNaN(v) ? yScale(yDomain[0]) + id * 5 : yScale(v)], id])
+        vec_x_y_pathId.push(...tmpVec)
+    }
+    let vec_x_y = vec_x_y_pathId.map(([[x, y], id]) => [x, y])
+    const delaunay = d3.Delaunay.from(vec_x_y);
 
 
-        let vec_x_y = vec_x_y_pathId.map(([[x, y], id]) => [x, y])
-        const delaunay = d3.Delaunay.from(vec_x_y);
-
-        // let closest_point_index = delaunay.find(xTranslate+px, py);
+    let closestSelectedPathToMouse = null; // The closest path to the mouse
+    const queryEventPointIntoVoronoiDiagram = event => {
         [xtest, ytest] = d3.pointer(event, d3.select(event.target.parentNode.parentNode).node())
         let closest_point_index = delaunay.find(xtest, ytest);
         let pathIndex = vec_x_y_pathId[closest_point_index][1]
-
         let queryFunction = functions_json['functions'][pathIndex];
-        // console.log('%c color', `background: ${queryFunction['color']}`)
         let queryFunctionPathEl = d3.select(`#${queryFunction['name']}-${pathIndex}`);
-        queryFunctionPathEl.dispatch("click")
-    })
-    //     .on("mouseleave", function (event, d) {
-    //     console.log("exit")
-    // })
+        return queryFunctionPathEl;
+    }
+    let nFunctions = Object.entries(functions_json['functions']).length;
+
+    if (getHighlightClosestPathToMouse()) {
+        container
+            .on("mouseover", function (event) {
+                if (nFunctions === 0) return;
+
+                // HIGHLIGHT THE OLD PATH OFF (IF ANY)
+                closestSelectedPathToMouse?.attr('stroke-width', 1)
+
+                // QUERY THE NEW CLOSEST PATH TO THE MOUSE POINTER
+                closestSelectedPathToMouse = queryEventPointIntoVoronoiDiagram(event)
+                // HIGHLIGHT THE NEW CLOSEST SELECTED PATH
+                closestSelectedPathToMouse.attr('stroke-width', 5)
+            })
+            .on("mouseout", function (event) {
+                if (nFunctions === 0) return;
+
+                // HIGHLIGHT THE SELECTED PATH OFF
+                closestSelectedPathToMouse?.attr('stroke-width', 1)
+                closestSelectedPathToMouse = null;
+            })
+    }
+
+    container
+        .on("click", function (event) {
+            if (nFunctions === 0) return;
+
+            closestSelectedPathToMouse = queryEventPointIntoVoronoiDiagram(event)
+            // IF A PATH IS ALREADY FOUND, SIMULATE A MOUSEOUT EVENT LEFT CLICK
+            closestSelectedPathToMouse?.dispatch("click")
+
+        })
+        .on("contextmenu", event => {
+            if (nFunctions === 0) return;
+
+            closestSelectedPathToMouse = queryEventPointIntoVoronoiDiagram(event)
+            // IF A PATH IS ALREADY FOUND, SIMULATE A MOUSEOUT EVENT RIGHT CLICK
+            closestSelectedPathToMouse?.dispatch("contextmenu")
+        })
 
     for (const [id, value] of Object.entries(functions_json['functions'])) {
         let container2 = container.append('g');
@@ -548,10 +561,8 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
             .data(specialPoints)
             .enter()
             .append("svg:circle")
-            // .filter((d,i)=>specialPoints.includes(i))
-            // .attr("class", "glucose")
-            .attr("r", 4)
-            .attr('stroke-width',1)
+            .attr("r", 7)
+            .attr('stroke-width', 3)
             .attr('cx', (indexPoint) => xScale(xDomain[indexPoint]))
             .attr('cy', indexPoint => {
                 let yValue = new_data[indexPoint];
@@ -584,10 +595,11 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
                 event.stopPropagation() // otherwise a click event to this path will be dispatched from the container
                 isPathClicked = !isPathClicked
                 const circles = d3.select(event.target.parentNode).selectAll('circle');
-                circles.style('visibility' , isPathClicked ? 'visible' : 'hidden')
+                circles.style('visibility', isPathClicked ? 'visible' : 'hidden')
             })
             .on("contextmenu", event => {
                 console.log("right click")
+                event.stopPropagation()
                 const v = d3.select(event.target);
                 const pathId = v.attr('id')
                 removeIndicatorFunctionByD3Select(pathId)

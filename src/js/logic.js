@@ -12,6 +12,7 @@ var _curr_data_sample_size = _default_sample_size;
 // checkbox values
 var _candlestick_enabled = false;
 var _overlap_indicators_enabled = false;
+var _highlight_closest_path_to_mouse = false;
 var _overlap_titles_enabled = false;
 var _indicator_windows_enabled = false;
 // indicator list
@@ -311,7 +312,9 @@ function setColors(colors) {
 function setOverlappingIndicatorsVisibility(isChecked) {
     _overlap_indicators_enabled = isChecked;
 }
-
+function setHighlightClosestPathToMouse(isChecked) {
+    _highlight_closest_path_to_mouse = isChecked;
+}
 function setOverlappingTitlesVisibility(isChecked) {
     _overlap_titles_enabled = isChecked;
 }
@@ -355,7 +358,9 @@ function getPatternsVisibility() {
 function getOverlappingIndicatorsVisibility() {
     return _overlap_indicators_enabled;
 }
-
+function getHighlightClosestPathToMouse() {
+    return _highlight_closest_path_to_mouse;
+}
 function getOverlappingTitlesVisibility() {
     return _overlap_titles_enabled;
 }
