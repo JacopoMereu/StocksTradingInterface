@@ -19,21 +19,19 @@
 <div class="tooltip"></div>
 <!--1st row: header menu -->
 <div class="row">
-    <span>
-    <p id="label_date">Put the cursor on a candle</p>
-    <p id="label_open"></p>
-    <p id="label_close"></p>
-    <p id="label_high"></p>
-    <p id="label_low"></p>
-    <p id="label_volume"></p>
-    </span>
-</div>
-<!--2nd row: OHCL DATA and side menu-->
-<div class="row">
     <div class="left-column">
         <svg id="container"></svg>
     </div>
     <div class="right-column">
+        <span>
+            <p id="label_date">Put the cursor on a candle</p>
+            <p id="label_open"></p>
+            <p id="label_close"></p>
+            <p id="label_high"></p>
+            <p id="label_low"></p>
+            <p id="label_volume"></p>
+        </span>
+
         <button class="collapsible"><h2>Menu</h2></button>
         <div class="content">
             <!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
@@ -48,7 +46,8 @@
                 <br>
                 <!-- SELECT N data -->
                 <label for="selectSampleSize">N most recent data</label>
-                <input id="selectSampleSize" min="1" value="1" type="number" onblur="numericInputValidation(this); setDataSampleSizeHTML(this)"
+                <input id="selectSampleSize" min="1" value="1" type="number"
+                       onblur="numericInputValidation(this); setDataSampleSizeHTML(this)"
                        title="Rendering might lag if too many points are selected (>1000)">
                 /<label for="selectSampleSize" id="labelSampleSize">24</label>
                 <br>
@@ -124,13 +123,13 @@
                 </div>
                 <div>
                     <!-- Left click on path -->
-                    <img src="images/drag.png" title="Drag the left key mouse = move around" >
+                    <img src="images/drag.png" title="Drag the left key mouse = move around">
                     <br>
-                    <img src="images/scroll.png" title="Scroll above the graph = zoom in/out" >
+                    <img src="images/scroll.png" title="Scroll above the graph = zoom in/out">
                     <br>
-                    <img src="images/left-click.png" title="Left click on a line = enable/disable points of interest" >
+                    <img src="images/left-click.png" title="Left click on a line = enable/disable points of interest">
                     <br>
-                    <img src="images/right-click.png" title="Right click on a line = delete that line" >
+                    <img src="images/right-click.png" title="Right click on a line = delete that line">
                     <br>
                 </div>
             </fieldset>
@@ -238,5 +237,13 @@
         </div>
     </div>
 </div>
+<!--2nd row: OHCL DATA and side menu-->
+<!--<div class="row">-->
+<!--    &lt;!&ndash;    <div class="left-column">&ndash;&gt;-->
+<!--    -->
+<!--    &lt;!&ndash;    </div>&ndash;&gt;-->
+
+
+<!--</div>-->
 </body>
 </html>

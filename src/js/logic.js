@@ -32,7 +32,7 @@ function mainSVG() {
     const height = window.screen.height;
 
     console.log("height: " + height)
-    const svg = d3.select("svg")
+    const svg = d3.select("#container")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
@@ -88,7 +88,7 @@ const render_data = (data, timeframe) => {
     const old_transform = !charts.empty() ? charts.attr('transform') : undefined;
     charts.remove();
 
-    const svg = d3.select("svg");
+    const svg = d3.select("#container");
 
 
     //////////// render data ////////////

@@ -136,7 +136,7 @@ function createCandlestickChart(
 ) {
 
     // Create g for zooming
-    const container = d3.select('svg').append("g").attr('class', chartsClass);
+    const container = d3.select('#container').append("g").attr('class', chartsClass);
 
     const xDomain = xScale.domain();
     const xPadding = xScale.padding();
@@ -409,7 +409,7 @@ function genericIndicatorChart(functions_json,
     const yRange = [yLow - marginTop, yHigh + marginBottom];
 
     // Add container
-    const container = d3.select('svg').append("g")
+    const container = d3.select('#container').append("g")
         .attr('class', chartsClass)
         .attr('id', idChart);
 
@@ -560,7 +560,7 @@ function addIndicatorPaths(container, functions_json, xScale, yScale) {
         container2.selectAll("circle.line")
             .data(specialPoints)
             .enter()
-            .append("svg:circle")
+            .append("#container:circle")
             .attr("r", 7)
             .attr('stroke-width', 3)
             .attr('cx', (indexPoint) => xScale(xDomain[indexPoint]))
