@@ -29,7 +29,7 @@ window.onload = function () {
 
 function mainSVG() {
     const width = window.innerWidth;
-    const height = window.screen.height;
+    const height = window.screen.height*0.8;
 
     console.log("height: " + height)
     const svg = d3.select("#container")

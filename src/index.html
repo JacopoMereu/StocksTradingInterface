@@ -23,17 +23,47 @@
         <svg id="container"></svg>
     </div>
     <div class="right-column">
-        <span>
-            <p id="label_date">Put the cursor on a candle</p>
-            <p id="label_open"></p>
-            <p id="label_close"></p>
-            <p id="label_high"></p>
-            <p id="label_low"></p>
-            <p id="label_volume"></p>
-        </span>
+        <fieldset>
+            <legend>Legend</legend>
+            <ul style="margin:0;columns: 2; -webkit-columns: 2; -moz-columns: 2; ">
+
+                <li style="list-style-image:url(images/open.png);">
+                    <div title="The opening price of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_open">ciao</p>
+                    </div>
+                </li>
+                <li style="list-style-image:url(images/highest-price.png);">
+                    <div title="The highest price of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_high">ciao</p>
+                    </div>
+                </li>
+
+                <li style="list-style-image:url(images/calendar.png);">
+                    <div title="The timestamp of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_date">ciao</p>
+                    </div>
+                </li>
+                <li style="list-style-image:url(images/closed.png);">
+                    <div title="The closing price of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_close">ciao</p>
+                    </div>
+                </li>
+                <li style="list-style-image:url(images/lowest-price.png);">
+                    <div title="The lowest of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_low">ciao</p>
+                    </div>
+                </li>
+
+                <li style="list-style-image:url(images/transaction.png);">
+                    <div title="The volume (number of transactions) of the highlighted bar">
+                        <p style="display: inline-block; vertical-align: middle" id="label_volume">ciao</p>
+                    </div>
+                </li>
+            </ul>
+        </fieldset>
 
         <button class="collapsible"><h2>Menu</h2></button>
-        <div class="content">
+        <div class="collapsible_content">
             <!--DROPDOWN TO SELECT THE DATASET AND THE TIME-FRAME-->
             <fieldset>
                 <legend>Dataset</legend>
@@ -142,7 +172,7 @@
         <!--                ex ea commodo consequat.</p>-->
         <!--        </div>-->
         <button class="collapsible"><h2>Help</h2></button>
-        <div class="content">
+        <div class="collapsible_content">
             <h3>What's a candlestick pattern?</h3>
             <p>A candlestick pattern is a pattern (a specific combination) of candlesticks that can be used to predict
                 the

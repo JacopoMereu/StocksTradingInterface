@@ -906,9 +906,9 @@ function updateLegend(container, date_string, open_string, close_string, low_str
     const formatChange = (f => (y0, y1) => f((y1 - y0) / y0))(d3.format("+.2%"));
 
     d3.select('#label_date').text(formatDate(new Date(date_string)));
-    d3.select('#label_open').text("Open:" + formatValue(open_string));
-    d3.select('#label_close').text("Close:" + formatValue(close_string) + ' (' + formatChange(open_string, close_string) + ')');
-    d3.select('#label_high').text("High:" + formatValue(high_string));
-    d3.select('#label_low').text("Low:" + formatValue(low_string));
-    d3.select('#label_volume').text("Volume:" + formatValue(volume_string));
+    d3.select('#label_open').text("" + formatValue(open_string));
+    d3.select('#label_close').text("" + formatValue(close_string) + ' (' + formatChange(open_string, close_string) + ')');
+    d3.select('#label_high').text("" + formatValue(high_string));
+    d3.select('#label_low').text("" + formatValue(low_string));
+    d3.select('#label_volume').text("" + formatValue(volume_string));
 }
